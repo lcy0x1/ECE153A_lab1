@@ -165,6 +165,7 @@ void histogram(void) {
 }
 
 void collection(void) {
+	xil_printf("CSV output\n\r");
 	int n = 0, prev = 0, min, count, i, cur;
 	while (n < NUMBER_OF_TRIALS) {
 		min = 0;
@@ -182,7 +183,7 @@ void collection(void) {
 		}
 		n += count;
 		prev = min;
-		xil_printf("value = %d:\tcount = %d\n\r", min, count);
+		xil_printf("%d,%d\n\r", min, count);
 	}
 	xil_printf("Done!\n\r");
 }

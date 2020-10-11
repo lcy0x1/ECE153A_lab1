@@ -25,8 +25,9 @@ unsigned int buffer[BUFFER_SIZE]; //buffer for read/write operations to the DDR 
  */
 #define LED_CHANNEL 1
 
-
 void histogram(void); // This function creates a histogram for the measured data
+
+void collection(void);
 
 /*
  * The following are declared globally so they are zeroed and so they are
@@ -45,16 +46,15 @@ int numClockCycles[NUMBER_OF_TRIALS];
 //Stores the number of samples in each bin
 int histData[NUMBER_OF_BINS];
 
-
 //BaseAddr points to the base (byte) address of the DDR2 Memory
 u8 * BaseAddr = (u8 *) XPAR_MIG7SERIES_0_BASEADDR;
 
-
-int main()
-{
-	Xil_ICacheInvalidate();
+int main() {
+	Xil_ICacheInvalidate()
+	;
 	Xil_ICacheEnable();
-	Xil_DCacheInvalidate();
+	Xil_DCacheInvalidate()
+	;
 	Xil_DCacheEnable();
 	print("---Entering main---\n\r");
 	int i = 0;
@@ -62,58 +62,59 @@ int main()
 	u32 Addr;
 	volatile unsigned int Data;
 
-
 	// Extra Method contains an interrupt routine which is set to go off at timed intervals
-    	extra_method();
+	extra_method();
 
+	//TIMER RESET CODE
+	//Turn off the timer
+	XTmrCtr_SetControlStatusReg(XPAR_TMRCTR_0_BASEADDR, 1, 0);
+	//Put a zero in the load register
+	XTmrCtr_SetLoadReg(XPAR_TMRCTR_0_BASEADDR, 1, 0);
+	//Copy the load register into the counter register
+	XTmrCtr_SetControlStatusReg(XPAR_TMRCTR_0_BASEADDR, 1, XTC_CSR_LOAD_MASK);
+	//Enable (start) the timer
+	XTmrCtr_SetControlStatusReg(XPAR_TMRCTR_0_BASEADDR, 1,
+			XTC_CSR_ENABLE_TMR_MASK);
+	//END TIMER RESET CODE
 
- 	//TIMER RESET CODE
-		//Turn off the timer
-		XTmrCtr_SetControlStatusReg(XPAR_TMRCTR_0_BASEADDR, 1, 0);
-		//Put a zero in the load register
-		XTmrCtr_SetLoadReg(XPAR_TMRCTR_0_BASEADDR, 1, 0);
-		//Copy the load register into the counter register
-		XTmrCtr_SetControlStatusReg(XPAR_TMRCTR_0_BASEADDR, 1, XTC_CSR_LOAD_MASK);
- 		//Enable (start) the timer
- 		XTmrCtr_SetControlStatusReg(XPAR_TMRCTR_0_BASEADDR, 1,	XTC_CSR_ENABLE_TMR_MASK);
- 		//END TIMER RESET CODE
+	//INITIALIZATION FOR AXI GPIO LED PORT
+	XGpio_Initialize(&Gpio, XPAR_AXI_GPIO_LED_DEVICE_ID);
 
- 	//INITIALIZATION FOR AXI GPIO LED PORT
- 		XGpio_Initialize(&Gpio, XPAR_AXI_GPIO_LED_DEVICE_ID);
+	for (i = 0; i < NUMBER_OF_TRIALS; i++) {
 
-    for( i=0; i < NUMBER_OF_TRIALS; i++) {
+		Addr = rand() % BUFFER_SIZE; //Will be used to access a random buffer index
 
-    	Addr = rand()%BUFFER_SIZE; //Will be used to access a random buffer index
+		timer_val_before = XTmrCtr_GetTimerCounterReg(XPAR_TMRCTR_0_BASEADDR,
+				1); //Store the timer value before executing the operation being timed
 
-    	timer_val_before = XTmrCtr_GetTimerCounterReg(XPAR_TMRCTR_0_BASEADDR, 1); //Store the timer value before executing the operation being timed
+		// Enter the line of Code to time.
 
- 		// Enter the line of Code to time.
+		Data = buffer[Addr];
+		Data = buffer[Addr];
+		Data = buffer[Addr];
+		Data = buffer[Addr];
+		Data = buffer[Addr];
 
+		//XGpio_DiscreteWrite(&Gpio, LED_CHANNEL, 0x1); //Turns on one LED
 
-    	Data = buffer[Addr];
-    	Data = buffer[Addr];
-    	Data = buffer[Addr];
-    	Data = buffer[Addr];
-    	Data = buffer[Addr];
+		numClockCycles[i] =
+		XTmrCtr_GetTimerCounterReg(XPAR_TMRCTR_0_BASEADDR, 1)
+				- timer_val_before; //Stores the time to execute the operation
 
+	}
 
-    	//XGpio_DiscreteWrite(&Gpio, LED_CHANNEL, 0x1); //Turns on one LED
+	xil_printf("Finish Collecting Data\n\r");
+	//Prints the collected data
+	for (i = 0; i < NUMBER_OF_TRIALS; i++) {
+		//xil_printf("%d,%d\n\r", i, numClockCycles[i]);
+	}
 
- 		numClockCycles[i] = XTmrCtr_GetTimerCounterReg(XPAR_TMRCTR_0_BASEADDR, 1) - timer_val_before; //Stores the time to execute the operation
-
-     }
-
-    //Prints the collected data
-    for (i=0; i < NUMBER_OF_TRIALS; i++ ) {
- 		xil_printf("%d,%d\n\r", i,numClockCycles[i]);
-    }
-
-    histogram(); //Creates a histogram for the measured data
+	//histogram(); //Creates a histogram for the measured data
+	collection();
 
 }
 
-
-void histogram(void){
+void histogram(void) {
 
 	int min, max, binSize, binIndex;
 
@@ -124,37 +125,57 @@ void histogram(void){
 	max = numClockCycles[0];
 
 	//find the min and max values
-	for (i=0; i<NUMBER_OF_TRIALS; i++)
-	{
-		if (numClockCycles[i] < min) min = numClockCycles[i];
-		if (numClockCycles[i] > max) max = numClockCycles[i];
+	for (i = 0; i < NUMBER_OF_TRIALS; i++) {
+		if (numClockCycles[i] < min)
+			min = numClockCycles[i];
+		if (numClockCycles[i] > max)
+			max = numClockCycles[i];
 	}
 
-	binSize = (max - min)/NUMBER_OF_BINS;
+	binSize = (max - min) / NUMBER_OF_BINS;
 
 	//Bin number for each data element is found here
-	for (i=0; i<NUMBER_OF_TRIALS; i++)
-	{
+	for (i = 0; i < NUMBER_OF_TRIALS; i++) {
 		binIndex = 0;
 		if (binSize > 0) {
-			binIndex = (numClockCycles[i] - min)/binSize;
-			if (binIndex >= NUMBER_OF_BINS) binIndex = NUMBER_OF_BINS - 1 ;
+			binIndex = (numClockCycles[i] - min) / binSize;
+			if (binIndex >= NUMBER_OF_BINS)
+				binIndex = NUMBER_OF_BINS - 1;
 			histData[binIndex]++;
-		}
-		else {
+		} else {
 			//if there is no variance in the data all values are assigned to bin 0
 			histData[0] = NUMBER_OF_TRIALS;
 			break;
 		}
 	}
 	//Prints the number of elements in each bin
-	for (i=0; i<NUMBER_OF_BINS; i++)
-	{
-		xil_printf("Bin %d: %d\n\r",i,histData[i]);
+	for (i = 0; i < NUMBER_OF_BINS; i++) {
+		xil_printf("Bin %d: %d\n\r", i, histData[i]);
 	}
 
 	xil_printf("Done!\n\r");
 
-
 }
 
+void collection(void) {
+	int n = 0, prev = 0, min, count, i, cur;
+	while (n < NUMBER_OF_TRIALS) {
+		min = 0;
+		count = 0;
+		for (i = 0; i < NUMBER_OF_TRIALS; i++) {
+			cur = numClockCycles[i];
+			if (cur > prev) {
+				if (min == 0 || cur < min) {
+					min = cur;
+					count = 1;
+				} else if (cur == min) {
+					count++;
+				}
+			}
+		}
+		n += count;
+		prev = min;
+		xil_printf("value = %d:\tcount = %d\n\r", min, count);
+	}
+	xil_printf("Done!\n\r");
+}

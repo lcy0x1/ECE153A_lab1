@@ -90,7 +90,7 @@ int main() {
 
 	xil_printf("Start Collecting Data\n\r");
 
-	for (i = 0; i < NUMBER_OF_TRIALS; i++) {
+	for (i = -10; i < NUMBER_OF_TRIALS; i++) {
 
 		Addr = rand() % BUFFER_SIZE; //Will be used to access a random buffer index
 
@@ -103,16 +103,17 @@ int main() {
 
 		//REPEAT_5(XGpio_DiscreteWrite(&Gpio, LED_CHANNEL, 0x1);)//Turns on one LED
 
-		numClockCycles[i] =
-		XTmrCtr_GetTimerCounterReg(XPAR_TMRCTR_0_BASEADDR, 1)
-				- timer_val_before; //Stores the time to execute the operation
+		if (i >= 0)
+			numClockCycles[i] =
+			XTmrCtr_GetTimerCounterReg(XPAR_TMRCTR_0_BASEADDR, 1)
+					- timer_val_before; //Stores the time to execute the operation
 
 	}
 
 	xil_printf("Finish Collecting Data\n\r");
 	//Prints the collected data
 	for (i = 0; i < NUMBER_OF_TRIALS; i++) {
-		//xil_printf("%d,%d\n\r", i, numClockCycles[i]);
+		xil_printf("%d,%d\n\r", i, numClockCycles[i]);
 	}
 
 	//histogram(); //Creates a histogram for the measured data

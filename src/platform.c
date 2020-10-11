@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2010 - 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2010 - 2014 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -35,73 +35,56 @@
 
 #include "platform_config.h"
 
-/*
- * Uncomment one of the following two lines, depending on the target,
- * if ps7/psu init source files are added in the source directory for
- * compiling example outside of SDK.
- */
-/*#include "ps7_init.h"*/
-/*#include "psu_init.h"*/
-
 #ifdef STDOUT_IS_16550
- #include "xuartns550_l.h"
-
- #define UART_BAUD 9600
+#include "xuartns550_l.h"
 #endif
 
 void
 enable_caches()
 {
 #ifdef __PPC__
-    Xil_ICacheEnableRegion(CACHEABLE_REGION_MASK);
-    Xil_DCacheEnableRegion(CACHEABLE_REGION_MASK);
+    Xil_ICacheEnableRegion(XPAR_CACHEABLE_REGION_MASK);
+    // Do not enable caches for memory tests, this has pros and cons
+    // Pros - If caches are enabled, under certain configurations, there will be very few 
+    //        transactions to external memory
+    // Con  - This might not generate a burst cacheline request
+    // Xil_DCacheEnableRegion(CACHEABLE_REGION_MASK);
 #elif __MICROBLAZE__
-#ifdef XPAR_MICROBLAZE_USE_ICACHE
+#ifdef XPAR_MICROBLAZE_USE_ICACHE 
     Xil_ICacheEnable();
 #endif
-#ifdef XPAR_MICROBLAZE_USE_DCACHE
-    Xil_DCacheEnable();
+#ifdef XPAR_MICROBLAZE_USE_DCACHE 
+    // See reason above for not enabling D Cache
+    // Xil_DCacheEnable();
 #endif
+#elif __arm__
+    // For ARM, BSP enables caches by default.
 #endif
 }
 
 void
 disable_caches()
 {
-#ifdef __MICROBLAZE__
-#ifdef XPAR_MICROBLAZE_USE_DCACHE
     Xil_DCacheDisable();
-#endif
-#ifdef XPAR_MICROBLAZE_USE_ICACHE
     Xil_ICacheDisable();
-#endif
-#endif
-}
-
-void
-init_uart()
-{
-#ifdef STDOUT_IS_16550
-    XUartNs550_SetBaud(STDOUT_BASEADDR, XPAR_XUARTNS550_CLOCK_HZ, UART_BAUD);
-    XUartNs550_SetLineControlReg(STDOUT_BASEADDR, XUN_LCR_8_DATA_BITS);
-#endif
-    /* Bootrom/BSP configures PS7/PSU UART to 115200 bps */
 }
 
 void
 init_platform()
 {
-    /*
-     * If you want to run this example outside of SDK,
-     * uncomment one of the following two lines and also #include "ps7_init.h"
-     * or #include "ps7_init.h" at the top, depending on the target.
-     * Make sure that the ps7/psu_init.c and ps7/psu_init.h files are included
-     * along with this example source files for compilation.
-     */
-    /* ps7_init();*/
-    /* psu_init();*/
     enable_caches();
-    init_uart();
+
+#ifdef __arm__
+    // For ARM, BSP enables caches by default. Disable them here.
+    // See reason above for disabling D Cache
+    Xil_DCacheDisable();
+#endif
+
+    /* if we have a uart 16550, then that needs to be initialized */
+#ifdef STDOUT_IS_16550
+    XUartNs550_SetBaud(STDOUT_BASEADDR, XPAR_XUARTNS550_CLOCK_HZ, 9600);
+    XUartNs550_SetLineControlReg(STDOUT_BASEADDR, XUN_LCR_8_DATA_BITS);
+#endif
 }
 
 void

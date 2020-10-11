@@ -17,6 +17,14 @@
 #define NUMBER_OF_TRIALS 150
 #define NUMBER_OF_BINS 15
 #define BUFFER_SIZE (1024*1024)
+
+#define REPEAT_5(X) X X X X X
+#define REPEAT_10(X) REPEAT_5(X) REPEAT_5(X)
+#define REPEAT_15(X) REPEAT_10(X) REPEAT_5(X)
+#define REPEAT_20(X) REPEAT_10(X) REPEAT_10(X)
+#define REPEAT_25(X) REPEAT_5(REPEAT_5(X))
+#define REPEAT_40(X) REPEAT_15(X) REPEAT_25(X)
+
 unsigned int buffer[BUFFER_SIZE]; //buffer for read/write operations to the DDR memory
 
 /*
@@ -80,6 +88,8 @@ int main() {
 	//INITIALIZATION FOR AXI GPIO LED PORT
 	XGpio_Initialize(&Gpio, XPAR_AXI_GPIO_LED_DEVICE_ID);
 
+	xil_printf("Start Collecting Data\n\r");
+
 	for (i = 0; i < NUMBER_OF_TRIALS; i++) {
 
 		Addr = rand() % BUFFER_SIZE; //Will be used to access a random buffer index
@@ -89,13 +99,9 @@ int main() {
 
 		// Enter the line of Code to time.
 
-		Data = buffer[Addr];
-		Data = buffer[Addr];
-		Data = buffer[Addr];
-		Data = buffer[Addr];
-		Data = buffer[Addr];
+		REPEAT_40(Data = buffer[Addr];)// read
 
-		//XGpio_DiscreteWrite(&Gpio, LED_CHANNEL, 0x1); //Turns on one LED
+		//REPEAT_5(XGpio_DiscreteWrite(&Gpio, LED_CHANNEL, 0x1);)//Turns on one LED
 
 		numClockCycles[i] =
 		XTmrCtr_GetTimerCounterReg(XPAR_TMRCTR_0_BASEADDR, 1)

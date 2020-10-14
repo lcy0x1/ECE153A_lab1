@@ -172,6 +172,7 @@ void histogram(void) {
 }
 
 void collection(void) {
+	xil_printf("TSV output\n\r");
 	int n = 0, prev = 0, min, count, i, cur;
 	while (n < NUMBER_OF_TRIALS) {
 		min = 0;

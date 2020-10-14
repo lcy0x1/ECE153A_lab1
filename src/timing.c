@@ -23,7 +23,7 @@
 #define REPEAT_15(X) REPEAT_10(X) REPEAT_5(X)
 #define REPEAT_20(X) REPEAT_10(X) REPEAT_10(X)
 #define REPEAT_25(X) REPEAT_5(REPEAT_5(X))
-#define REPEAT_40(X) REPEAT_15(X) REPEAT_25(X)
+#define REPEAT_40(X) REPEAT_20(X) REPEAT_20(X)
 
 unsigned int buffer[BUFFER_SIZE]; //buffer for read/write operations to the DDR memory
 
@@ -68,6 +68,8 @@ int main() {
 	int i = 0;
 	int timer_val_before; //Used to store the timer value before executing the operation being timed
 	u32 Addr;
+	volatile int temp0,temp1;
+	volatile float fp;
 	volatile unsigned int Data;
 
 	// Extra Method contains an interrupt routine which is set to go off at timed intervals
@@ -90,25 +92,29 @@ int main() {
 
 	xil_printf("Start Collecting Data\n\r");
 
-	for (i = -10; i < NUMBER_OF_TRIALS; i++) {
+	for (i = 0; i < NUMBER_OF_TRIALS; i++) {
 
 		Addr = rand() % BUFFER_SIZE; //Will be used to access a random buffer index
+		temp0 = rand();
+		temp1 = rand();
+
 
 		timer_val_before = XTmrCtr_GetTimerCounterReg(XPAR_TMRCTR_0_BASEADDR,
 				1); //Store the timer value before executing the operation being timed
 
 		// Enter the line of Code to time.
 
-		REPEAT_40(Data = buffer[Addr];)// read
-
-		//REPEAT_5(XGpio_DiscreteWrite(&Gpio, LED_CHANNEL, 0x1);)//Turns on one LED
-
-		if (i >= 0)
-			numClockCycles[i] =
-			XTmrCtr_GetTimerCounterReg(XPAR_TMRCTR_0_BASEADDR, 1)
-					- timer_val_before; //Stores the time to execute the operation
+		//REPEAT_40(Data = buffer[Addr];)// read
+		//REPEAT_40(Data = temp0 + temp1;)// addition
+		//REPEAT_40(XGpio_DiscreteWrite(&Gpio, LED_CHANNEL, 0x1);)//Turns on one LED
+		REPEAT_40()
+		numClockCycles[i] =
+		XTmrCtr_GetTimerCounterReg(XPAR_TMRCTR_0_BASEADDR, 1)
+				- timer_val_before; //Stores the time to execute the operation
 
 	}
+
+	XGpio_DiscreteWrite(&Gpio, LED_CHANNEL, 0x0);
 
 	xil_printf("Finish Collecting Data\n\r");
 	//Prints the collected data
@@ -118,6 +124,7 @@ int main() {
 
 	//histogram(); //Creates a histogram for the measured data
 	collection();
+	//histogram();
 
 }
 
@@ -182,7 +189,7 @@ void collection(void) {
 		}
 		n += count;
 		prev = min;
-		xil_printf("value = %d:\tcount = %d\n\r", min, count);
+		xil_printf("%d\t%d\n\r", min, count);
 	}
 	xil_printf("Done!\n\r");
 }

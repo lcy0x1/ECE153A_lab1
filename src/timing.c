@@ -69,8 +69,9 @@ int main() {
 	int timer_val_before; //Used to store the timer value before executing the operation being timed
 	u32 Addr;
 	volatile int temp0,temp1;
-	volatile float fp;
 	volatile unsigned int Data;
+	volatile float fp1,fp2;
+	volatile float fpdata;
 
 	// Extra Method contains an interrupt routine which is set to go off at timed intervals
 	extra_method();
@@ -106,8 +107,9 @@ int main() {
 
 		//REPEAT_40(Data = buffer[Addr];)// read
 		//REPEAT_40(Data = temp0 + temp1;)// addition
+		REPEAT_40(fpdata = fp1 + fp2;)// addition float
 		//REPEAT_40(XGpio_DiscreteWrite(&Gpio, LED_CHANNEL, 0x1);)//Turns on one LED
-		REPEAT_40()
+		//REPEAT_40()
 		numClockCycles[i] =
 		XTmrCtr_GetTimerCounterReg(XPAR_TMRCTR_0_BASEADDR, 1)
 				- timer_val_before; //Stores the time to execute the operation

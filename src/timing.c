@@ -96,9 +96,10 @@ int main() {
 	for (i = 0; i < NUMBER_OF_TRIALS; i++) {
 
 		Addr = rand() % BUFFER_SIZE; //Will be used to access a random buffer index
-		temp0 = rand();
-		temp1 = rand();
-
+		//temp0 = rand();
+		//temp1 = rand();
+		fp1 = (double)rand() / RAND_MAX;
+		fp2 = (double)rand() / RAND_MAX;//Generate Float
 
 		timer_val_before = XTmrCtr_GetTimerCounterReg(XPAR_TMRCTR_0_BASEADDR,
 				1); //Store the timer value before executing the operation being timed

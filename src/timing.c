@@ -14,10 +14,12 @@
 #include "extra.h" 		// Provides a source of bus contention
 #include "xgpio.h" 		// LED driver, used for General purpose I/i
 
-#define NUMBER_OF_TRIALS 150
+#define NUMBER_OF_TRIALS 50
 #define NUMBER_OF_BINS 15
 #define BUFFER_SIZE (1024*1024)
 
+
+#define REPEAT_1(X) X
 #define REPEAT_5(X) X X X X X
 #define REPEAT_10(X) REPEAT_5(X) REPEAT_5(X)
 #define REPEAT_15(X) REPEAT_10(X) REPEAT_5(X)
@@ -68,8 +70,8 @@ int main() {
 	int i = 0;
 	int timer_val_before; //Used to store the timer value before executing the operation being timed
 	u32 Addr;
-	volatile int temp0,temp1;
-	volatile float fp;
+	volatile int temp0, temp1;
+	volatile float f0,f1,fp;
 	volatile unsigned int Data;
 
 	// Extra Method contains an interrupt routine which is set to go off at timed intervals
@@ -97,7 +99,9 @@ int main() {
 		Addr = rand() % BUFFER_SIZE; //Will be used to access a random buffer index
 		temp0 = rand();
 		temp1 = rand();
-
+		f0 = rand() * 0.3378234;
+		f1 = rand() * 0.3378234;
+		fp = rand() * 0.3378234;
 
 		timer_val_before = XTmrCtr_GetTimerCounterReg(XPAR_TMRCTR_0_BASEADDR,
 				1); //Store the timer value before executing the operation being timed
@@ -106,8 +110,11 @@ int main() {
 
 		//REPEAT_40(Data = buffer[Addr];)// read
 		//REPEAT_40(Data = temp0 + temp1;)// addition
-		//REPEAT_40(XGpio_DiscreteWrite(&Gpio, LED_CHANNEL, 0x1);)//Turns on one LED
-		REPEAT_40()
+		//REPEAT_40(fp=f0+f1;)
+		//REPEAT_1(XGpio_DiscreteWrite(&Gpio, LED_CHANNEL, 0x1);)//Turns on one LED
+		//REPEAT_1(printf("%f\n\r", fp);)// print floating point
+		REPEAT_1(xil_printf("1234567890\n\r");)// print
+
 		numClockCycles[i] =
 		XTmrCtr_GetTimerCounterReg(XPAR_TMRCTR_0_BASEADDR, 1)
 				- timer_val_before; //Stores the time to execute the operation
@@ -119,18 +126,18 @@ int main() {
 	xil_printf("Finish Collecting Data\n\r");
 	//Prints the collected data
 	for (i = 0; i < NUMBER_OF_TRIALS; i++) {
-		xil_printf("%d,%d\n\r", i, numClockCycles[i]);
+		xil_printf("%d\n\r",  numClockCycles[i]);
 	}
 
 	//histogram(); //Creates a histogram for the measured data
 	collection();
-	//histogram();
 
 }
 
 void histogram(void) {
 
 	int min, max, binSize, binIndex;
+	long sum = 0;
 
 	int i;
 
@@ -144,6 +151,7 @@ void histogram(void) {
 			min = numClockCycles[i];
 		if (numClockCycles[i] > max)
 			max = numClockCycles[i];
+		sum += numClockCycles[i];
 	}
 
 	binSize = (max - min) / NUMBER_OF_BINS;
@@ -164,8 +172,11 @@ void histogram(void) {
 	}
 	//Prints the number of elements in each bin
 	for (i = 0; i < NUMBER_OF_BINS; i++) {
-		xil_printf("Bin %d: %d\n\r", i, histData[i]);
+		xil_printf("%d\n\r", histData[i]);
 	}
+	xil_printf("%d\n\r", min);
+	xil_printf("%d\n\r", max);
+	xil_printf("%d\n\r", sum / NUMBER_OF_TRIALS);
 
 	xil_printf("Done!\n\r");
 

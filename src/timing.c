@@ -73,6 +73,8 @@ int main() {
 	volatile int temp0, temp1;
 	volatile float f0,f1,fp;
 	volatile unsigned int Data;
+	volatile float fp1,fp2;
+	volatile float fpdata;
 
 	// Extra Method contains an interrupt routine which is set to go off at timed intervals
 	extra_method();

@@ -14,7 +14,7 @@
 #include "extra.h" 		// Provides a source of bus contention
 #include "xgpio.h" 		// LED driver, used for General purpose I/i
 
-#define NUMBER_OF_TRIALS 50
+#define NUMBER_OF_TRIALS 150
 #define NUMBER_OF_BINS 15
 #define BUFFER_SIZE (1024*1024)
 
@@ -75,6 +75,7 @@ int main() {
 	volatile unsigned int Data;
 	volatile float fp1,fp2;
 	volatile float fpdata;
+	volatile u8 * Addr2;
 
 	// Extra Method contains an interrupt routine which is set to go off at timed intervals
 	extra_method();
@@ -99,6 +100,7 @@ int main() {
 	for (i = 0; i < NUMBER_OF_TRIALS; i++) {
 
 		Addr = rand() % BUFFER_SIZE; //Will be used to access a random buffer index
+		Addr2 = BaseAddr + rand() % BUFFER_SIZE;
 		temp0 = rand();
 		temp1 = rand();
 		f0 = rand() * 0.3378234;
@@ -110,12 +112,13 @@ int main() {
 
 		// Enter the line of Code to time.
 
-		//REPEAT_40(Data = buffer[Addr];)// read
-		//REPEAT_40(Data = temp0 + temp1;)// addition
-		//REPEAT_40(fp=f0+f1;)
+		//REPEAT_40(Data = buffer[Addr];)// DDR read
+		//REPEAT_10(Data = *Addr2;)// DDR2 read
+		//REPEAT_40(Data = temp0 + temp1;)// integer addition
+		//REPEAT_40(fp=f0+f1;)// floating-point addition
 		//REPEAT_1(XGpio_DiscreteWrite(&Gpio, LED_CHANNEL, 0x1);)//Turns on one LED
 		//REPEAT_1(printf("%f\n\r", fp);)// print floating point
-		REPEAT_1(xil_printf("1234567890\n\r");)// print
+		//REPEAT_1(xil_printf("1234567890\n\r");)// print 10 characters
 
 		numClockCycles[i] =
 		XTmrCtr_GetTimerCounterReg(XPAR_TMRCTR_0_BASEADDR, 1)

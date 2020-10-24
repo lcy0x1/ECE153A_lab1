@@ -64,9 +64,16 @@ void intr(void) {
 	// when start and stop are pressed at the same time, prioritize STOP over START
 	if (flag & BTN_LEFT)
 		timer = 0; // reset
-	if (flag & BTN_CENTER)
-		status = STATUS_TIMER; // start
-	if (flag & BTN_RIGHT)
+	if (flag & BTN_CENTER) {
+		// start
+		if (status == STATUS_TIMER) {
+			status = STATUS_STOP;
+		} else {
+			status = STATUS_TIMER;
+			timer = 0;
+		}
+	}
+	else if (flag & BTN_RIGHT)
 		status = STATUS_STOP; // stop
 
 	// global clock for this grand loop

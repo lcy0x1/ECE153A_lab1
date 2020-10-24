@@ -61,19 +61,22 @@ void intr(void) {
 
 	u32 flag = getAndClearBtnFlag();
 
-	// when start and stop are pressed at the same time, prioritize STOP over START
+	// when start and stop are pressed at the same time, prioritize START over STOP
 	if (flag & BTN_LEFT)
 		timer = 0; // reset
 	if (flag & BTN_CENTER) {
 		// start
-		if (status == STATUS_TIMER) {
+		if (!MULTI_FUNCTION_START) {
+			// start button version 1
+			// executed only when the start button only has one function
+			status = STATUS_TIMER;
+		} else if (status == STATUS_TIMER) {
 			status = STATUS_STOP;
 		} else {
 			status = STATUS_TIMER;
 			timer = 0;
 		}
-	}
-	else if (flag & BTN_RIGHT)
+	} else if (flag & BTN_RIGHT)
 		status = STATUS_STOP; // stop
 
 	// global clock for this grand loop
@@ -95,7 +98,6 @@ void intr(void) {
 	for (i = 0; i < 8; i++) {
 		val = time % 10;
 		time /= 10;
-
 		if ((clk & 7) == i)
 			sevenseg_draw_digit(i, val);
 	}

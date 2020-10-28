@@ -16,6 +16,7 @@ XGpio sys_led;
 
 void (*intr_tmr)(void);
 
+volatile int tmr_timer = 0, last_time = 0;
 volatile int enc_pos = 0;
 int enc_pushed = 0, led_off = 0;
 enum ENC_STATE enc_state = INIT;
@@ -31,7 +32,8 @@ void timer_handler() {
 	ControlStatusReg =
 	XTimerCtr_ReadReg(sys_tmrctr.BaseAddress, 0, XTC_TCSR_OFFSET);
 
-	intr_tmr();
+	tmr_timer++;
+	//intr_tmr();
 
 	XTmrCtr_WriteReg(sys_tmrctr.BaseAddress, 0, XTC_TCSR_OFFSET,
 			ControlStatusReg |XTC_CSR_INT_OCCURED_MASK);
@@ -63,7 +65,7 @@ u32 encoder_FSM(u32 enc_flag) {
 			enc_pos--;
 			return FSM_OUT_CW | FSM_ERR_TWO_JUMP;
 		} else
-			return FSM_ERR_AMBIGIOUS;
+			return FSM_ERR_UNKNOWN;
 	else if (enc_flag == 2)
 		if (enc_state == CW2) // pin 1 0->1
 			enc_state = CW3;
@@ -78,7 +80,7 @@ u32 encoder_FSM(u32 enc_flag) {
 			enc_state = CCW1;
 			return FSM_ERR_TWO_JUMP;
 		} else
-			return FSM_ERR_AMBIGIOUS;
+			return FSM_ERR_UNKNOWN;
 	else if (enc_flag == 1)
 		if (enc_state == CCW2) // pin 2 0->1
 			enc_state = CCW3;
@@ -93,7 +95,7 @@ u32 encoder_FSM(u32 enc_flag) {
 			enc_state = CW1;
 			return FSM_ERR_TWO_JUMP;
 		} else
-			return FSM_ERR_AMBIGIOUS;
+			return FSM_ERR_UNKNOWN;
 	else if (enc_flag == 0)
 		if (enc_state == CCW1 || enc_state == CCW3) // pin 1 1->0 or pin 2 1->0
 			enc_state = CCW2;
@@ -109,19 +111,26 @@ u32 encoder_FSM(u32 enc_flag) {
 }
 
 void encoder_handler() {
-
 	u32 enc_flag = XGpio_DiscreteRead(&sys_enc, 1);
+	u32 enc_prev = enc_state;
 	u32 result = encoder_FSM(enc_flag & 3);
 	if (enc_pushed == 0 && (enc_flag & 4) > 0) {
 		led_off = 1 - led_off;
 	}
 	enc_pushed = enc_flag & 4;
-	if (result & FSM_OUT_CW)
-		enc_pos--;
-	if (result & FSM_OUT_CCW)
-		enc_pos++;
+	if (!led_off) {
+		if (result & FSM_OUT_CW)
+			enc_pos--;
+		if (result & FSM_OUT_CCW)
+			enc_pos++;
+	}
 	u32 led = led_off ? 0 : 1 << (enc_pos & 0xF);
 	XGpio_DiscreteWrite(&sys_led, 1, led);
+
+	//u32 led_debug = enc_flag | enc_prev << 4 | enc_state << 8 | result << 12;
+	//if (result != 0 && result != 2)
+	//	XGpio_DiscreteWrite(&sys_led, 1, led_debug);
+
 	XGpio_InterruptClear(&sys_enc, ENC_MASK); // clear the interrupt flag
 }
 

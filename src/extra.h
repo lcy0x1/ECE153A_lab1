@@ -11,25 +11,24 @@
 
 #define ASSERT(X) if(X != XST_SUCCESS) return XST_FAILURE;
 
-// this macro tells the granularity of the stop watch. currently it works on 10ms granularity
+// this macro tells the granularity of the timer. currently it works on 125us granularity
 // smaller granularity will overburden the processor and make the stop watch unusable
-#define GRANULARITY 100
+#define GRANULARITY 10
 
 // 80kHz / granularity
 #define RESET_VALUE 1250*GRANULARITY
 
 #define FSM_ERR_NONE 0
-#define FSM_ERR_TWO_JUMP 1
-#define FSM_ERR_SAME 0
-#define FSM_ERR_AMBIGIOUS 15
-#define FSM_ERR_UNKNOWN 4
+#define FSM_ERR_SAME 1
+#define FSM_ERR_TWO_JUMP 2
+#define FSM_ERR_AMBIGIOUS 4
+#define FSM_ERR_UNKNOWN 8
 #define FSM_OUT_CW 32
 #define FSM_OUT_CCW 64
 
 enum ENC_STATE {
 	INIT, CW1, CW2, CW3, CCW1, CCW2, CCW3
 };
-
 
 // the interrupt handler for the timer
 void timer_handler();

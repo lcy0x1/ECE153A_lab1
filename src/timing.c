@@ -59,45 +59,17 @@ void intr(void) {
 	if (status == STATUS_PREPARE)
 		return;
 
-	u32 flag = getAndClearBtnFlag();
+	u32 flag = getEncPos() & 0xFF;
 
-	// when start and stop are pressed at the same time, prioritize START over STOP
-	if (flag & BTN_LEFT)
-		timer = 0; // reset
-	if (flag & BTN_CENTER) {
-		// start
-		if (!MULTI_FUNCTION_START) {
-			// start button version 1
-			// executed only when the start button only has one function
-			status = STATUS_TIMER;
-		} else if (status == STATUS_TIMER) {
-			status = STATUS_STOP;
-		} else {
-			status = STATUS_TIMER;
-			timer = 0;
-		}
-	} else if (flag & BTN_RIGHT)
-		status = STATUS_STOP; // stop
-
-	// global clock for this grand loop
 	static u32 clk = 0;
 
-	// frequency = 80kHz / granularity
 	clk++;
-
-	if (status == STATUS_TIMER)
-		timer++;
-
-	// refreshing LED takes 8 calls
-	// effectively the LED display has 80kHz/granularity/8 = 10kHz/granularity refresh frequency
-	// desired clock frequency of 10KHz, thus each time it steps up by the granularity
-	u32 time = timer / 8 * GRANULARITY;
 
 	u32 i, val = 0;
 
 	for (i = 0; i < 8; i++) {
-		val = time % 10;
-		time /= 10;
+		val = flag % 10;
+		flag /= 10;
 		if ((clk & 7) == i)
 			sevenseg_draw_digit(i, val);
 	}

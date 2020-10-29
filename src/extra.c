@@ -55,7 +55,7 @@ u32 encoder_FSM_switch(u32 enc_flag) {
 		case AMB0:								// double bouncing correction
 			return INIT | FSM_ERR_AMBIGIOUS;	// double bouncing correction
 		}										// double bouncing correction
-// end double boncing correction code ---------------------------------------
+// end double bouncing correction code ---------------------------------------
 
 	case 2:
 		switch (enc_state) {
@@ -75,7 +75,7 @@ u32 encoder_FSM_switch(u32 enc_flag) {
 		case CCW3:								// double bouncing correction
 			return CCW1 | FSM_ERR_TWO_JUMP;		// double bouncing correction
 		}										// double bouncing correction
-// end double boncing correction code ---------------------------------------
+// end double bouncing correction code ---------------------------------------
 
 	case 1:
 		switch (enc_state) {
@@ -95,7 +95,7 @@ u32 encoder_FSM_switch(u32 enc_flag) {
 		case CW3:								// double bouncing correction
 			return CW1 | FSM_ERR_TWO_JUMP;		// double bouncing correction
 		}										// double bouncing correction
-// end double boncing correction code ---------------------------------------
+// end double bouncing correction code ---------------------------------------
 
 	case 0:
 		switch (enc_state) {
@@ -114,7 +114,7 @@ u32 encoder_FSM_switch(u32 enc_flag) {
 		case INIT:								// double bouncing correction
 			return AMB0 | FSM_ERR_AMBIGIOUS;	// double bouncing correction
 		}										// double bouncing correction
-// end double boncing correction code ---------------------------------------
+// end double bouncing correction code ---------------------------------------
 	}
 	return FSM_ERR_UNKNOWN;
 }

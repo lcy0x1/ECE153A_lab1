@@ -1,3 +1,4 @@
+
 #include "xtmrctr.h"
 #include "xintc.h"
 #include "xparameters.h"
@@ -25,11 +26,15 @@
 #define FSM_ERR_UNKNOWN 64
 #define FSM_OUT_CW 128
 #define FSM_OUT_CCW 256
+#define RGB_GREEN 2
+#define RGB_OFF 0
 
 enum ENC_STATE {
 	INIT, CW1, CW2, CW3, CCW1, CCW2, CCW3
 };
-
+void rgbLED();
+void rgboff();
+//LED RGB status check
 // the interrupt handler for the timer
 void timer_handler();
 // the interrupt handler for the encoder

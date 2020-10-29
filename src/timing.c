@@ -66,7 +66,10 @@ void intr(void) {
 	clk++;
 
 	u32 i, val = 0;
-
+	if(clk%4000>2000)
+	rgbLED();
+	else
+	rgboff();
 	for (i = 0; i < 8; i++) {
 		val = flag % 10;
 		flag /= 10;
@@ -74,3 +77,4 @@ void intr(void) {
 			sevenseg_draw_digit(i, val);
 	}
 }
+

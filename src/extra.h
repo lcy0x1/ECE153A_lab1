@@ -18,13 +18,13 @@
 // 80kHz / granularity
 #define RESET_VALUE 1250*GRANULARITY
 
-#define FSM_ERR_NONE 0
-#define FSM_ERR_SAME 1
-#define FSM_ERR_TWO_JUMP 2
-#define FSM_ERR_AMBIGIOUS 4
-#define FSM_ERR_UNKNOWN 8
-#define FSM_OUT_CW 32
-#define FSM_OUT_CCW 64
+#define FSM_STATE_BITS 7
+#define FSM_ERR_SAME 8
+#define FSM_ERR_TWO_JUMP 16
+#define FSM_ERR_AMBIGIOUS 32
+#define FSM_ERR_UNKNOWN 64
+#define FSM_OUT_CW 128
+#define FSM_OUT_CCW 256
 
 enum ENC_STATE {
 	INIT, CW1, CW2, CW3, CCW1, CCW2, CCW3

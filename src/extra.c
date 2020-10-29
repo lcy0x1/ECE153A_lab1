@@ -5,6 +5,7 @@
 #define INTR_ENC XPAR_MICROBLAZE_0_AXI_INTC_AXI_GPIO_ENCODER_IP2INTC_IRPT_INTR
 #define ID_INTC XPAR_MICROBLAZE_0_AXI_INTC_DEVICE_ID
 #define ID_ENC XPAR_AXI_GPIO_ENCODER_DEVICE_ID
+#define ID_RGB XPAR_AXI_GPIO_RGBLEDS_DEVICE_ID
 #define ID_LED XPAR_AXI_GPIO_LED_DEVICE_ID
 #define ENC_MASK XGPIO_IR_CH1_MASK
 
@@ -13,6 +14,7 @@ XTmrCtr sys_tmrctr;
 Xuint32 data;
 XGpio sys_enc;
 XGpio sys_led;
+XGpio sys_rgb;
 
 void (*intr_tmr)(void);
 
@@ -20,7 +22,12 @@ volatile int tmr_timer = 0, last_time = 0;
 volatile int enc_pos = 0;
 int enc_pushed = 0, led_off = 0;
 enum ENC_STATE enc_state = INIT;
-
+void rgbLED(){
+	XGpio_DiscreteWrite(&sys_rgb, 1, RGB_GREEN);
+}
+void rgboff(){
+	XGpio_DiscreteWrite(&sys_rgb, 1, RGB_OFF);
+}
 // software debounce and debounce stat collection can be enabled or disabled in extra.h
 u32 getEncPos() {
 	return enc_pos;
@@ -113,8 +120,12 @@ u32 encoder_FSM_switch(u32 enc_flag) {
 // invalid transitions are usually the result of missed interrupt
 u32 encoder_FSM(u32 enc_flag) {
 	u32 result = encoder_FSM_switch(enc_flag);
-	if (!(result&FSM_ERR_SAME))
+	//if(result&FSM_ERR_TWO_JUMP)
+	//	xil_printf("TWOJUMP!\n\r");
+	if (!(result&FSM_ERR_SAME)){
 		enc_state = result & FSM_STATE_BITS;
+		//xil_printf("GOOD!\n\r");
+		}
 	return result;
 }
 
@@ -160,6 +171,7 @@ int extra_method(void (*intr)(void)) {
 	XIntc_Enable(&sys_intc, INTR_TIMER_0);
 	XIntc_Enable(&sys_intc, INTR_ENC);
 	ASSERT(XGpio_Initialize(&sys_led, ID_LED))
+	ASSERT(XGpio_Initialize(&sys_rgb, ID_RGB))
 	ASSERT(XGpio_Initialize(&sys_enc, ID_ENC))
 	ASSERT(XTmrCtr_Initialize(&sys_tmrctr, ID_INTC))
 	XTmrCtr_SetOptions(&sys_tmrctr, 0,

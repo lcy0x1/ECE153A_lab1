@@ -12,7 +12,7 @@
 #include "xil_cache.h"		// Cache Drivers
 #include "extra.h" 		// Provides a source of bus contention
 
-int main() {
+int main_0() {
 	Xil_ICacheInvalidate()
 	Xil_ICacheEnable();
 	Xil_DCacheInvalidate()

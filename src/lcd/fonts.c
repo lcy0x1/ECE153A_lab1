@@ -1,4 +1,4 @@
-#include "../lcd/lcd.h"
+#include "lcd.h"
 
 // SmallFont.c 
 // Font Size	: 8x12

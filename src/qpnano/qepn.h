@@ -374,6 +374,6 @@ QState QHsm_top(QHsm *me);
 
 #endif                                                            /* Q_NHSM */
 
-#include "../qpnano/qassert.h"            /* include the QP-nano assertions (for DbC) */
+#include "qassert.h"            /* include the QP-nano assertions (for DbC) */
 
 #endif                                                            /* qepn_h */

@@ -44,7 +44,7 @@
   examples and tools supplied with the library.
 */
 
-#include "../lcd/lcd.h"
+#include "lcd.h"
 
 // Global variables
 int fch;

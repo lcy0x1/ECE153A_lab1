@@ -25,8 +25,8 @@
 #define Q_ISR_NEST
 
 #include <stdint.h>       /* IAR provides C99-standard exact-width integers */
-#include "../qpnano/qepn.h"         /* QEP-nano platform-independent public interface */
-#include "../qpnano/qfn.h"           /* QF-nano platform-independent public interface */
+#include "qepn.h"         /* QEP-nano platform-independent public interface */
+#include "qfn.h"           /* QF-nano platform-independent public interface */
 
 
 

@@ -4,18 +4,15 @@
 *****************************************************************************/
 
 /**/
-#include "../qpnano/bsp.h"
+#include "../z_example_qpnano/bsp.h"
 
 #include "xintc.h"
 #include "xil_exception.h"
-#include "../qpnano/lab2a.h"
 #include "../qpnano/qpn_port.h"
+#include "../z_example_qpnano/lab2a.h"
 
 /*****************************/
-
 /* Define all variables and Gpio objects here  */
-
-#define GPIO_CHANNEL1 1
 
 void debounceInterrupt(); // Write This function
 
@@ -25,6 +22,8 @@ void debounceInterrupt(); // Write This function
 
 /*..........................................................................*/
 void BSP_init(void) {
+
+
 /* Setup LED's, etc */
 /* Setup interrupts and reference to interrupt handler function(s)  */
 

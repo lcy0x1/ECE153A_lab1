@@ -6,7 +6,7 @@
 #ifndef lab2a_h
 #define lab2a_h
 
-#include "qepn.h"
+#include "../qpnano/qepn.h"
 
 enum Lab2ASignals {
 	ENCODER_UP = Q_USER_SIG,

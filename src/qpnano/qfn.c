@@ -25,7 +25,7 @@
 * Quantum Leaps Web site:  http://www.quantum-leaps.com
 * e-mail:                  info@quantum-leaps.com
 *****************************************************************************/
-#include "../qpnano/qpn_port.h"                                       /* QP-nano port */
+#include "qpn_port.h"                                       /* QP-nano port */
 
 Q_DEFINE_THIS_MODULE(qfn)
 

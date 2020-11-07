@@ -6,8 +6,8 @@
 #define AO_LAB2A
 
 #include "../qpnano/qpn_port.h"
-#include "../qpnano/bsp.h"
-#include "../qpnano/lab2a.h"
+#include "../z_example_qpnano/bsp.h"
+#include "../z_example_qpnano/lab2a.h"
 
 
 

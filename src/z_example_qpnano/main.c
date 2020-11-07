@@ -4,9 +4,9 @@
 *****************************************************************************/
 
 #include "xil_cache.h"		                /* Cache Drivers */
-#include "../qpnano/bsp.h"                             /* Board Support Package (BSP) */
-#include "../qpnano/lab2a.h"                               /* application interface */
 #include "../qpnano/qpn_port.h"                                       /* QP-nano port */
+#include "../z_example_qpnano/bsp.h"                             /* Board Support Package (BSP) */
+#include "../z_example_qpnano/lab2a.h"                               /* application interface */
 
 
 static QEvent l_lab2aQueue[30];  

@@ -5,6 +5,10 @@
 
 #include "setup.h"
 
+void intr_timer(u32 time);
+void intr_button(u32 flag);
+void intr_encoder(u32 flag);
+
 void lcd_test();
 void lcd_test_update();
 
@@ -14,6 +18,9 @@ int main() {
 	Xil_DCacheInvalidate()
 	Xil_DCacheEnable();
 	print("---Entering main---\n\r");
+	setTimerInterrupt(&intr_timer);
+	setButtonInterrupt(&intr_button);
+	setEncoderInterrupt(&intr_encoder);
 	if (setup()) {
 		print("Initialization failed\n\r");
 		print("---Exiting main---\n\r");
@@ -30,7 +37,19 @@ int main() {
 	return 0;
 }
 
-void lcd_test(){
+void intr_timer(u32 time) {
+
+}
+
+void intr_button(u32 flag) {
+	setLEDs(flag << 4);
+}
+
+void intr_encoder(u32 flag) {
+	setLEDs(flag);
+}
+
+void lcd_test() {
 
 	clrScr();
 
@@ -55,7 +74,7 @@ void lcd_test(){
 
 }
 
-void lcd_test_update(){
+void lcd_test_update() {
 
 	static int sec = 0;
 

@@ -55,6 +55,10 @@ static u32 alt_time = 0;
 static volatile u32 alt_timeout = 0;
 static volatile void (*alt_cb)(void) = 0;
 
+void (*intr_tmr)(u32) = 0;
+void (*intr_btn)(u32) = 0;
+void (*intr_enc)(u32) = 0;
+
 int setup_lcd(void);
 void timer_handler();
 void timer_alt_handler();
@@ -62,6 +66,43 @@ void button_handler();
 void encoder_handler();
 u32 encoder_FSM(u32 enc_flag);
 u32 encoder_FSM_switch(u32 enc_flag);
+
+// interrupt receiver
+
+void setTimerInterrupt(void (*intr)(u32)){
+	intr_tmr = intr;
+}
+
+void setButtonInterrupt(void (*intr)(u32)){
+	intr_btn = intr;
+}
+
+void setEncoderInterrupt(void (*intr)(u32)){
+	intr_enc = intr;
+}
+
+// interface
+
+u32 getTimeGlobal(void) {
+	return time_global;
+}
+
+void setLEDs(u32 flag){
+	XGpio_DiscreteWrite(&sys_led, GPIO_MASK, flag & 0xFFFF);
+}
+
+u32 timeout(u32 rst, void (*callback)(void)) {
+	if (!callback || !rst)
+		return TIMEOUT_ERROR;
+	u32 ret = alt_timeout == 0 ? TIMEOUT_SUCCESS : TIMEOUT_REPLACE;
+	alt_timeout = rst;
+	alt_time = time_global;
+	alt_cb = callback;
+	return ret;
+}
+
+
+// setup function
 
 int setup(void) {
 	ASSERT(XIntc_Initialize(&sys_intc, ID_INTC))
@@ -74,7 +115,7 @@ int setup(void) {
 	//XIntc_Enable(&sys_intc, INTR_TIMER_1);
 	XIntc_Enable(&sys_intc, INTR_BTN);
 	XIntc_Enable(&sys_intc, INTR_ENC);
-	//ASSERT(XGpio_Initialize(&sys_led, ID_LED))
+	ASSERT(XGpio_Initialize(&sys_led, ID_LED))
 	//ASSERT(XGpio_Initialize(&sys_rgb, ID_RGB))
 	ASSERT(XGpio_Initialize(&sys_btn, ID_BTN))
 	ASSERT(XGpio_Initialize(&sys_enc, ID_ENC))
@@ -106,7 +147,7 @@ int setup_lcd(void) {
 
 	ASSERT(XGpio_Initialize(&dc, XPAR_SPI_DC_DEVICE_ID))
 	XGpio_SetDataDirection(&dc, GPIO_MASK, 0x0);
-	ASSERT((spiConfig = XSpi_LookupConfig(XPAR_SPI_DEVICE_ID)))
+	ASSERT(!(spiConfig = XSpi_LookupConfig(XPAR_SPI_DEVICE_ID)))
 	ASSERT(XSpi_CfgInitialize(&spi, spiConfig, spiConfig->BaseAddress))
 	XSpi_Reset(&spi);
 	controlReg = XSpi_GetControlReg(&spi);
@@ -116,12 +157,16 @@ int setup_lcd(void) {
 	return XST_SUCCESS;
 }
 
+// private: interrupt handler
+
 void timer_handler() {
 	Xuint32 ctrl = XTimerCtr_ReadReg(sys_tmrctr.BaseAddress, 0, XTC_TCSR_OFFSET);
 	XTmrCtr_WriteReg(sys_tmrctr.BaseAddress, 0, XTC_TCSR_OFFSET,
 			ctrl |XTC_CSR_INT_OCCURED_MASK);
 	time_global++;
 
+	if(intr_tmr)
+		intr_tmr(time_global);
 	if (alt_timeout
 			&& (time_global < alt_time || time_global - alt_time >= alt_timeout)) {
 		alt_time = 0;
@@ -141,8 +186,6 @@ void timer_alt_handler() {
 void encoder_handler() {
 	static u32 enc_pushed = 0;
 	static u32 enc_prev = 0;
-	static u32 enc_enable = 1;
-	static u32 enc_volume = 0;
 
 	u32 action = 0;
 
@@ -152,25 +195,17 @@ void encoder_handler() {
 	u32 result = encoder_FSM(enc_flag & 3);
 	if (enc_pushed == 0 && (enc_flag & 4) > 0) {
 		u32 time = time_global;
-		if (time - enc_prev > DEBOUNCE_TIME) {
-			enc_enable = !enc_enable;
-			action = 1;
-		}
+		if (time - enc_prev > DEBOUNCE_TIME)
+			action |= ENC_PUSH;
 		enc_prev = time;
 	}
 	enc_pushed = enc_flag & 4;
-	if (enc_enable) {
-		if ((result & FSM_OUT_CW) && enc_volume < 63) {
-			enc_volume++;
-			action = 1;
-		}
-		if ((result & FSM_OUT_CCW) && enc_volume > 0) {
-			enc_volume--;
-			action = 1;
-		}
-	}
-	if (action)
-		ENC_SIGNAL(enc_enable ? enc_volume : 0)
+	if (result & FSM_OUT_CW)
+		action |= ENC_CW;
+	if (result & FSM_OUT_CCW)
+		action |= ENC_CCW;
+	if (action && intr_enc)
+		intr_enc(action);
 
 }
 
@@ -181,10 +216,12 @@ void button_handler() {
 	if (!btn_flag)
 		return;
 	u32 time = time_global;
-	if (time - btn_prev > DEBOUNCE_TIME)
-		BTN_SIGNAL(btn_flag)
+	if (time - btn_prev > DEBOUNCE_TIME && intr_btn)
+		intr_btn(btn_flag);
 	btn_prev = time;
 }
+
+// private: internal functions
 
 u32 encoder_FSM(u32 enc_flag) {
 	u32 result = encoder_FSM_switch(enc_flag);
@@ -277,18 +314,4 @@ u32 encoder_FSM_switch(u32 enc_flag) {
 // end double bouncing correction code ---------------------------------------
 	}
 	return FSM_ERR_UNKNOWN;
-}
-
-u32 getTimeGlobal(void) {
-	return time_global;
-}
-
-u32 timeout(u32 rst, void (*callback)(void)) {
-	if (!callback || !rst)
-		return TIMEOUT_ERROR;
-	u32 ret = alt_timeout == 0 ? TIMEOUT_SUCCESS : TIMEOUT_REPLACE;
-	alt_timeout = rst;
-	alt_time = time_global;
-	alt_cb = callback;
-	return ret;
 }

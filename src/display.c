@@ -1,10 +1,11 @@
 #include "display.h"
 
+#include <math.h>
 #include "bsp.h"
 
-#define UPDATE_BG 1
-#define UPDATE_VOL 2
-#define UPDATE_TXT 4
+#define MAX(A,B) A>B?A:B
+#define MIN(A,B) A<B?A:B
+#define RECT(X,Y,W,H) if(W>0&&H>0)fillRect(MAX(0,X), MAX(0,Y), MIN(239,X+W-1), MIN(319,Y+H-1));
 
 char* btn_texts[5] = { TEXT_0, TEXT_1, TEXT_2, TEXT_3, TEXT_4 };
 
@@ -20,6 +21,12 @@ typedef struct DISP_QUQUE {
 
 volatile DispQueue queue;
 
+void draw_background(void);
+void draw_volume(u32 volume);
+void draw_text(u32 index);
+void erase_volume(void);
+void erase_text(void);
+
 /* Interrupt robust code:
  *
  * This design use the increment - catch-up method to avoid clearing the
@@ -33,51 +40,75 @@ volatile DispQueue queue;
  *
  * */
 void main_loop(void) {
+	draw_background();
 	for (;;) {
 		u32 pending = queue.queue_pending;
 		if (queue.queue_complete < pending) {
 			queue.queue_complete = pending;
-
-			if (queue.update & UPDATE_BG) {
-				COL_BG_LINE
-				fillRect(0, 0, 239, 319);
-				COL_BG_RECT
-				for (int i = 0; i < 8; i++)
-					for (int j = 0; j < 6; j++)
-						fillRect(5 + j * 40, 5 + i * 40, 35 + j * 40,
-								35 + i * 40);
-			}
-			if (queue.update & UPDATE_VOL) {
-				COL_VOL_RECT
-				fillRect(36, 220, 204, 300);
-				COL_VOL_BACK
-				fillRect(56, 240, 184, 280);
-				COL_VOL_BAR
-				fillRect(56, 240, 56 + 2 * queue.volume, 280);
-			}
-			if (queue.update & UPDATE_TXT) {
-				setFont(BigFont);
-				lcdPrint(btn_texts[queue.button], 40, 80);
-			}
+			if (queue.update & UPDATE_VOL_OFF)
+				erase_volume();
+			else if (queue.update & UPDATE_VOL_ON)
+				draw_volume(queue.volume);
+			if (queue.update & UPDATE_TXT_OFF)
+				erase_text();
+			else if (queue.update & UPDATE_TXT_ON)
+				draw_text(queue.button);
 		}
 	}
 }
 
-void drawBG(void) {
-	queue.update = UPDATE_BG;
+void draw_background(void) {
+	COL_BG_RECT
+	RECT(0, 0, 240, 320)
+	COL_BG_LINE
+	for (int i = 0; i <= 6; i++)
+		RECT(-5+i*40,0,10,320)
+	for (int i = 0; i <= 8; i++)
+		RECT(0,-5+i*40,240,10)
 }
 
-void drawText(u32 ind) {
-	queue.button = ind;
-	queue.update |= UPDATE_TXT;
+void draw_volume(u32 volume) {
+	COL_VOL_RECT
+	RECT(45, 245, 150, 10);
+	RECT(45, 255, 12, 10);
+	RECT(183, 255, 12, 10);
+	RECT(45, 265, 150, 10);
+	COL_VOL_BACK
+	RECT(57+2*volume, 255, 126-2*volume, 10);
+	COL_VOL_BAR
+	RECT(57, 255, 2*volume, 10);
 }
 
-void drawVolume(u32 vol) {
+void draw_text(u32 index) {
+	COL_TEXT_BG
+	COL_TEXT
+	setFont(BigFont);
+	lcdPrint(btn_texts[index], 16, 92);
+}
+
+void erase_volume(void) {
+	COL_BG_RECT
+	for(int i=1;i<=4;i++)
+		RECT(5+i*40,245,30,30);
+	COL_BG_LINE
+	RECT(75,245,10,30);
+	RECT(115,245,10,30);
+	RECT(155,245,10,30);
+}
+
+void erase_text(void) {
+	COL_BG_RECT
+	for(int i=0;i<=5;i++)
+		RECT(5+i*40,92,30,16);
+	COL_BG_LINE
+	for(int i=0;i<=4;i++)
+	RECT(35+i*40,92,10,16);
+}
+
+void flush(u32 flags, u32 vol, u32 txt) {
+	queue.update = flags;
 	queue.volume = vol;
-	queue.update |= UPDATE_VOL;
-}
-
-void flush(void) {
+	queue.button = txt;
 	queue.queue_pending++;
 }
 

@@ -13,6 +13,8 @@ typedef struct Display_Tag {
 	u32 volume;
 	u32 volume_time;
 	u32 button_time;
+
+	u32 update_flag;
 } Display;
 
 Volume volume;
@@ -124,7 +126,6 @@ QState Disp_on(Display *me) {
 		return Q_HANDLED();
 	}
 	case Q_ENTRY_SIG: {
-		update_display();
 		return Q_HANDLED();
 	}
 	case Q_EXIT_SIG: {
@@ -134,39 +135,34 @@ QState Disp_on(Display *me) {
 		me->volume = me->param;
 		me->param = 0;
 		me->volume_time = TIMEOUT;
-		update_display();
+		me->update_flag |= UPDATE_VOL_ON;
 		return Q_HANDLED();
 	}
 	case BUTTON_CLICK: {
 		me->button = me->param;
 		me->param = 0;
 		me->button_time = TIMEOUT;
-		update_display();
+		me->update_flag |= UPDATE_TXT_ON;
 		return Q_HANDLED();
 	}
 	case TICK: {
-		u32 should_update = 0;
 		if (me->volume_time > 0) {
 			me->volume_time--;
-			should_update |= me->volume_time == 0;
+			if(me->volume_time == 0)
+				me->update_flag |= UPDATE_VOL_OFF;
 		}
 		if (me->button_time > 0) {
 			me->button_time--;
-			should_update |= me->button_time == 0;
+			if(me->button_time == 0)
+				me->update_flag |= UPDATE_TXT_OFF;
 		}
-		if (should_update)
-			update_display();
+		if (me->update_flag)
+			flush(me->update_flag, me->volume, me->button);
+		me->update_flag = 0;
 		return Q_HANDLED();
 	}
 	}
 	return Q_SUPER(&QHsm_top);
 }
 
-void update_display(void) {
-	drawBG();
-	if (display.volume_time > 0)
-		drawVolume(display.volume);
-	if (display.button_time > 0)
-		drawText(display.button);
-	flush();
-}
+

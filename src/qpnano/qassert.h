@@ -28,6 +28,8 @@
 #ifndef qassert_h
 #define qassert_h
 
+#include "qpn_port.h"
+
 /**
 * \file
 * \ingroup qepn qfn

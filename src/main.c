@@ -1,8 +1,11 @@
 #include "xil_cache.h"		// Cache Drivers
 #include "xil_printf.h"
-
+#include "qpnano/qpn_port.h"
+#include "bsp.h"
+#include "lab2b.h"
 #include "display.h"
-#include "setup.h"
+
+static volatile u32 ready = 0;
 
 void intr_timer(u32 time);
 void intr_button(u32 flag);
@@ -25,22 +28,44 @@ int main() {
 		print("Initialization succeed\n\r");
 
 	initLCD();
-
+	Lab2B_ctor();
+	ready = 1;
 	print("---Exiting main---\n\r");
 
-	lcd_test();
+	main_loop();
 
 	return 0;
 }
 
 void intr_timer(u32 time) {
-
+	if(!ready)
+		return;
+	dispatch_display(TICK, time);
 }
 
 void intr_button(u32 flag) {
-	setLEDs(flag << 4);
+	if(!ready)
+		return;
+	static u32 btnctn = 0;
+	btnctn++;
+	setLEDs(btnctn);
+
+
+	u32 btn = -1;
+	while(flag){
+		flag >>= 1;
+		btn++;
+	}
+	dispatch_display(BUTTON_CLICK, btn);
 }
 
 void intr_encoder(u32 flag) {
-	setLEDs(flag);
+	if(!ready)
+		return;
+	if(flag & ENC_CW)
+		dispatch_volume(ENCODER_CW);
+	if(flag & ENC_CCW)
+		dispatch_volume(ENCODER_CCW);
+	if(flag & ENC_PUSH)
+		dispatch_volume(ENCODER_CLICK);
 }

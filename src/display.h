@@ -18,12 +18,30 @@
 
 #define COL_TEXT setColor(0,0,0);
 
+/* the main loop to execute LCD instructions.
+ * Since LCD instructions take a relatively long time to execute,
+ * It is better to run it in the main loop instead of in interrupts.
+ * Call this function at the end of main
+ *
+ * Here I use an interrupt-robust implementation to make sure that
+ * all the content displayed on the LCD display visible to user is correct.
+ * Any incorrect render caused by interrupts will be overwritten immediately. */
+void main_loop(void);
+
+/* Queue an instruction to draw background */
 void drawBG(void);
 
+/* Queue an instruction to draw text message */
 void drawText(u32 ind);
 
+/* Queue an instruction to draw volume bar*/
 void drawVolume(u32 vol);
 
-void lcd_test(void);
+/* Flush the instructions and notify the main loop.
+ * Call this after calling any of the 3 functions above to make them executable,
+ * otherwise they will stay in the queue forever*/
+void flush(void);
+
+void lcd_test();
 
 #endif

@@ -1,17 +1,4 @@
-#include "xtmrctr.h"
-#include "xintc.h"
-#include "xparameters.h"
-#include "xtmrctr_l.h"
-#include "xintc_l.h"
-#include "xgpio.h"
-#include "xgpio_l.h"
-#include "xspi.h"
-#include "xspi_l.h"
-#include "mb_interface.h"
-#include <xbasic_types.h>
-#include <xio.h>
-
-#include "setup.h"
+#include "bsp.h"
 
 #define ASSERT(X) if(X != XST_SUCCESS) return XST_FAILURE;
 
@@ -48,16 +35,16 @@ XGpio sys_rgb;
 XTmrCtr sys_tmrctr;
 XTmrCtr sys_tmralt;
 
+void (*intr_tmr)(u32) = 0;
+void (*intr_btn)(u32) = 0;
+void (*intr_enc)(u32) = 0;
+
 static volatile u32 time_global = 0;
 static enum ENC_STATE enc_state = INIT;
 
 static u32 alt_time = 0;
 static volatile u32 alt_timeout = 0;
 static volatile void (*alt_cb)(void) = 0;
-
-void (*intr_tmr)(u32) = 0;
-void (*intr_btn)(u32) = 0;
-void (*intr_enc)(u32) = 0;
 
 int setup_lcd(void);
 void timer_handler();
@@ -67,7 +54,7 @@ void encoder_handler();
 u32 encoder_FSM(u32 enc_flag);
 u32 encoder_FSM_switch(u32 enc_flag);
 
-// interrupt receiver
+// ---------- interrupt receiver ---------
 
 void setTimerInterrupt(void (*intr)(u32)){
 	intr_tmr = intr;
@@ -81,28 +68,7 @@ void setEncoderInterrupt(void (*intr)(u32)){
 	intr_enc = intr;
 }
 
-// interface
-
-u32 getTimeGlobal(void) {
-	return time_global;
-}
-
-void setLEDs(u32 flag){
-	XGpio_DiscreteWrite(&sys_led, GPIO_MASK, flag & 0xFFFF);
-}
-
-u32 timeout(u32 rst, void (*callback)(void)) {
-	if (!callback || !rst)
-		return TIMEOUT_ERROR;
-	u32 ret = alt_timeout == 0 ? TIMEOUT_SUCCESS : TIMEOUT_REPLACE;
-	alt_timeout = rst;
-	alt_time = time_global;
-	alt_cb = callback;
-	return ret;
-}
-
-
-// setup function
+// ---------- setup functions ----------
 
 int setup(void) {
 	ASSERT(XIntc_Initialize(&sys_intc, ID_INTC))
@@ -132,9 +98,10 @@ int setup(void) {
 	XGpio_InterruptGlobalEnable(&sys_btn);
 	XGpio_InterruptGlobalEnable(&sys_enc);
 	microblaze_register_handler(XIntc_DeviceInterruptHandler, ID_INTC);
-	microblaze_enable_interrupts();
 
 	ASSERT(setup_lcd())
+
+	microblaze_enable_interrupts();
 
 	return XST_SUCCESS;
 }
@@ -157,7 +124,7 @@ int setup_lcd(void) {
 	return XST_SUCCESS;
 }
 
-// private: interrupt handler
+// ---------- private: interrupt handlers ----------
 
 void timer_handler() {
 	Xuint32 ctrl = XTimerCtr_ReadReg(sys_tmrctr.BaseAddress, 0, XTC_TCSR_OFFSET);
@@ -221,7 +188,7 @@ void button_handler() {
 	btn_prev = time;
 }
 
-// private: internal functions
+// ---------- private: internal functions ---------
 
 u32 encoder_FSM(u32 enc_flag) {
 	u32 result = encoder_FSM_switch(enc_flag);
@@ -315,3 +282,27 @@ u32 encoder_FSM_switch(u32 enc_flag) {
 	}
 	return FSM_ERR_UNKNOWN;
 }
+
+
+// ---------- Code below is only used for debug purpose ----------
+
+
+u32 getTimeGlobal(void) {
+	return time_global;
+}
+
+void setLEDs(u32 flag){
+	XGpio_DiscreteWrite(&sys_led, GPIO_MASK, flag & 0xFFFF);
+}
+
+u32 timeout(u32 rst, void (*callback)(void)) {
+	if (!callback || !rst)
+		return TIMEOUT_ERROR;
+	u32 ret = alt_timeout == 0 ? TIMEOUT_SUCCESS : TIMEOUT_REPLACE;
+	alt_timeout = rst;
+	alt_time = time_global;
+	alt_cb = callback;
+	return ret;
+}
+
+

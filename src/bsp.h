@@ -1,5 +1,18 @@
-#ifndef setup_h
-#define setup_h
+#ifndef bsp_h
+#define bsp_h
+
+#include "xtmrctr.h"
+#include "xintc.h"
+#include "xparameters.h"
+#include "xtmrctr_l.h"
+#include "xintc_l.h"
+#include "xgpio.h"
+#include "xgpio_l.h"
+#include "xspi.h"
+#include "xspi_l.h"
+#include "mb_interface.h"
+#include <xbasic_types.h>
+#include <xio.h>
 
 #define RESET_VALUE 100000 // the timer operates at 1kHz
 #define DEBOUNCE_TIME 100 // the debounce time is 0.1s
@@ -25,10 +38,18 @@ void setEncoderInterrupt(void (*intr)(u32)); // parameter: encoder flag
 /* setup interrupts and lcd, return XST_SUCCESS if initialization is successful */
 int setup(void);
 
-u32 getTimeGlobal(void); // retrieve the current time
+// ---------- Code below is only used for debug purpose ----------
+
+/* NOT USED: only used for debug purpose
+ * retrieve the global time value */
+u32 getTimeGlobal(void);
+
+/* NOT USED: only used for debug purpose
+ * set LED */
 void setLEDs(u32 flag);
 
-/* NOT USED set timeout and wake-up function, return one of the TIMEOUT op-code*/
+/* NOT USED: only used for debug purpose
+ * set timeout and wake-up function, return one of the TIMEOUT op-code */
 u32 timeout(u32 rst, void (*callback)(void));
 
 #endif

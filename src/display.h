@@ -24,15 +24,9 @@
 #define COL_TEXT_BG setColorBg(127,255,127);
 #define COL_TEXT setColor(238,64,0);
 
-/* the main loop to execute LCD instructions.
- * Since LCD instructions take a relatively long time to execute,
- * It is better to run it in the main loop instead of in interrupts.
- * Call this function at the end of main
- *
- * Here I use an interrupt-robust implementation to make sure that
- * all the content displayed on the LCD display visible to user is correct.
- * Any incorrect render caused by interrupts will be overwritten immediately. */
-void main_loop(void);
+void init_background(void);
+
+void update_queue(void);
 
 /* add new instructions into the queue
  * use UPDATE flags and OR them together.

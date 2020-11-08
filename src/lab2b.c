@@ -1,14 +1,12 @@
 #include "lab2b.h"
-#include "display.h"
 
 typedef struct Volume_Tag {
-	QHsm super;
+	QActive super;
 	u32 volume;
 } Volume;
 
 typedef struct Display_Tag {
-	QHsm super;
-	u32 param;
+	QActive super;
 	u32 button;
 	u32 volume;
 	u32 volume_time;
@@ -34,21 +32,16 @@ void update_display();
 /**********************************************************************/
 
 void dispatch_volume(enum VOL_SIG sig) {
-	Q_SIG(&volume) = sig;
-	QHsm_dispatch((QHsm *) &volume);
+	QActive_postISR((QActive *)&volume, sig, getGlobalTime());
 }
 
 void dispatch_display(enum DISP_SIG sig, u32 param) {
-	Q_SIG(&display) = sig;
-	display.param = param;
-	QHsm_dispatch((QHsm *) &display);
+	QActive_postISR((QActive *)&display, sig, param);
 }
 
 void Lab2B_ctor(void) {
-	QHsm_ctor(&display.super, (QStateHandler ) &Disp_init);
-	QHsm_init((QHsm *) &display);
-	QHsm_ctor(&volume.super, (QStateHandler ) &Vol_init);
-	QHsm_init((QHsm *) &volume);
+	QActive_ctor(&display.super, (QStateHandler ) &Disp_init);
+	QActive_ctor(&volume.super, (QStateHandler ) &Vol_init);
 }
 
 QState Vol_init(Volume *me) {
@@ -132,15 +125,13 @@ QState Disp_on(Display *me) {
 		return Q_HANDLED();
 	}
 	case VOLUME_CHANGE: {
-		me->volume = me->param;
-		me->param = 0;
+		me->volume = Q_PAR(me);
 		me->volume_time = TIMEOUT;
 		me->update_flag |= UPDATE_VOL_ON;
 		return Q_HANDLED();
 	}
 	case BUTTON_CLICK: {
-		me->button = me->param;
-		me->param = 0;
+		me->button = Q_PAR(me);
 		me->button_time = TIMEOUT;
 		me->update_flag |= UPDATE_TXT_ON;
 		return Q_HANDLED();
@@ -165,4 +156,28 @@ QState Disp_on(Display *me) {
 	return Q_SUPER(&QHsm_top);
 }
 
+#include <stdio.h>
 
+void log_debug_info(void){
+	print("--- DEBUG INFO ---\n\r");
+	printf("queue size - volume: %d\n\r",volume.super.nUsed);
+	printf("queue size - display: %d\n\r",display.super.nUsed);
+	printf("volume queue: \n\r");
+	QActiveCB cb = QF_active[volume.super.prio];
+	char* strs[8] = {"(null)","entry","exit","init","timeout","cw","ccw","click"};
+	for(int i=0;i<volume.super.nUsed;i++){
+		QEvent ev = cb.queue[(volume.super.head + i) % cb.end];
+		printf("event %d: %s - %d\n\r",i,strs[ev.sig],ev.par);
+	}
+	cb = QF_active[display.super.prio];
+	strs[5] = "vol";
+	strs[6] = "btn";
+	strs[7] = "tick";
+	printf("display queue: \n\r");
+	for(int i=0;i<display.super.nUsed;i++){
+		QEvent ev = cb.queue[(display.super.head - i + cb.end) % cb.end];
+		printf("event %d: %s - %d\n\r",i,strs[ev.sig],ev.par);
+	}
+
+
+}

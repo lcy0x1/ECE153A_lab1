@@ -34,9 +34,9 @@
  * Any incorrect render caused by interrupts will be overwritten immediately. */
 void main_loop(void);
 
-
+/* add new instructions into the queue
+ * use UPDATE flags and OR them together.
+ * erase operation has higher priority than draw*/
 void flush(u32 flags, u32 vol, u32 txt);
-
-void lcd_test();
 
 #endif

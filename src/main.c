@@ -46,11 +46,6 @@ void intr_timer(u32 time) {
 void intr_button(u32 flag) {
 	if(!ready)
 		return;
-	static u32 btnctn = 0;
-	btnctn++;
-	setLEDs(btnctn);
-
-
 	u32 btn = -1;
 	while(flag){
 		flag >>= 1;

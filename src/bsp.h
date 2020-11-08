@@ -17,10 +17,6 @@
 #define RESET_VALUE 100000 // the timer operates at 1kHz
 #define DEBOUNCE_TIME 100 // the debounce time is 0.1s
 
-#define TIMEOUT_SUCCESS 0
-#define TIMEOUT_REPLACE 1
-#define TIMEOUT_ERROR 2
-
 #define BTN_UP 1
 #define BTN_LEFT 2
 #define BTN_RIGHT 4
@@ -37,19 +33,5 @@ void setEncoderInterrupt(void (*intr)(u32)); // parameter: encoder flag
 
 /* setup interrupts and lcd, return XST_SUCCESS if initialization is successful */
 int setup(void);
-
-// ---------- Code below is only used for debug purpose ----------
-
-/* NOT USED: only used for debug purpose
- * retrieve the global time value */
-u32 getTimeGlobal(void);
-
-/* NOT USED: only used for debug purpose
- * set LED */
-void setLEDs(u32 flag);
-
-/* NOT USED: only used for debug purpose
- * set timeout and wake-up function, return one of the TIMEOUT op-code */
-u32 timeout(u32 rst, void (*callback)(void));
 
 #endif

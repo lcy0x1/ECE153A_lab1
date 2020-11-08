@@ -42,10 +42,6 @@ void (*intr_enc)(u32) = 0;
 static volatile u32 time_global = 0;
 static enum ENC_STATE enc_state = INIT;
 
-static u32 alt_time = 0;
-static volatile u32 alt_timeout = 0;
-static volatile void (*alt_cb)(void) = 0;
-
 int setup_lcd(void);
 void timer_handler();
 void timer_alt_handler();
@@ -134,14 +130,6 @@ void timer_handler() {
 
 	if(intr_tmr)
 		intr_tmr(time_global);
-	if (alt_timeout
-			&& (time_global < alt_time || time_global - alt_time >= alt_timeout)) {
-		alt_time = 0;
-		alt_timeout = 0;
-		void (*temp)(void) = alt_cb;
-		alt_cb = 0;
-		temp();
-	}
 }
 
 void timer_alt_handler() {
@@ -282,27 +270,3 @@ u32 encoder_FSM_switch(u32 enc_flag) {
 	}
 	return FSM_ERR_UNKNOWN;
 }
-
-
-// ---------- Code below is only used for debug purpose ----------
-
-
-u32 getTimeGlobal(void) {
-	return time_global;
-}
-
-void setLEDs(u32 flag){
-	XGpio_DiscreteWrite(&sys_led, GPIO_MASK, flag & 0xFFFF);
-}
-
-u32 timeout(u32 rst, void (*callback)(void)) {
-	if (!callback || !rst)
-		return TIMEOUT_ERROR;
-	u32 ret = alt_timeout == 0 ? TIMEOUT_SUCCESS : TIMEOUT_REPLACE;
-	alt_timeout = rst;
-	alt_time = time_global;
-	alt_cb = callback;
-	return ret;
-}
-
-

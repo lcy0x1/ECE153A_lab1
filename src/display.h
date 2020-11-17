@@ -21,8 +21,8 @@
 #define COL_VOL_BACK setColor(0,0,0);
 #define COL_VOL_BAR setColor(0,127,0);
 
-#define COL_TEXT_BG setColorBg(127,255,127);
-#define COL_TEXT setColor(238,64,0);
+#define COL_TEXT setColor(127,255,127);
+#define COL_TEXT_BG setColorBg(238,64,0);
 
 void init_background(void);
 

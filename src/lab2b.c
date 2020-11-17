@@ -3,6 +3,7 @@
 typedef struct Volume_Tag {
 	QActive super;
 	u32 volume;
+	u32 cache_volume;
 } Volume;
 
 typedef struct Display_Tag {
@@ -60,10 +61,18 @@ QState Vol_base(Volume *me) {
 		return Q_HANDLED();
 	}
 	case ENCODER_CW: {
-		return Q_HANDLED();
+		if (me->volume < MAX_VOLUME) {
+			me->volume++;
+		}
+		dispatch_display(VOLUME_CHANGE, me->volume);
+		return Q_TRAN(&Vol_enable);
 	}
 	case ENCODER_CCW: {
-		return Q_HANDLED();
+		if (me->volume > 0) {
+			me->volume--;
+		}
+		dispatch_display(VOLUME_CHANGE, me->volume);
+		return Q_TRAN(&Vol_enable);
 	}
 	}
 	return Q_SUPER(&QHsm_top);
@@ -71,21 +80,10 @@ QState Vol_base(Volume *me) {
 
 QState Vol_enable(Volume *me) {
 	switch (Q_SIG(me)) {
-	case ENCODER_CW: {
-		if (me->volume < MAX_VOLUME) {
-			me->volume++;
-		}
-		dispatch_display(VOLUME_CHANGE, me->volume);
-		return Q_HANDLED();
-	}
-	case ENCODER_CCW: {
-		if (me->volume > 0) {
-			me->volume--;
-		}
-		dispatch_display(VOLUME_CHANGE, me->volume);
-		return Q_HANDLED();
-	}
 	case ENCODER_CLICK: {
+		me->cache_volume = me->volume;
+		me->volume = 0;
+		dispatch_display(VOLUME_CHANGE, me->volume);
 		return Q_TRAN(&Vol_disable);
 	}
 	}
@@ -94,15 +92,9 @@ QState Vol_enable(Volume *me) {
 
 QState Vol_disable(Volume *me) {
 	switch (Q_SIG(me)) {
-	case Q_ENTRY_SIG: {
-		dispatch_display(VOLUME_CHANGE, 0);
-		return Q_HANDLED();
-	}
-	case Q_EXIT_SIG: {
-		dispatch_display(VOLUME_CHANGE, me->volume);
-		return Q_HANDLED();
-	}
 	case ENCODER_CLICK: {
+		me->volume = me->cache_volume;
+		dispatch_display(VOLUME_CHANGE, me->volume);
 		return Q_TRAN(&Vol_enable);
 	}
 	}

@@ -12,10 +12,12 @@ void precompute(){
 	}
 }
 
-static float new_[SAMPLES];
-static float new_im[SAMPLES];
+static int new_[SAMPLES];
+static int new_im[SAMPLES];
 
-float fft(float* q, float* w, float sample_f) {
+static float amp[SAMPLES];
+
+float fft(int* q, int* w, float sample_f) {
 	int n = SAMPLES, m = M, angle;
 	int a,b,r,d,e,c;
 	int k,place;
@@ -24,6 +26,7 @@ float fft(float* q, float* w, float sample_f) {
 	int i,j;
 	float real=0,imagine=0;
 	float max,frequency;
+	float fq, fw;
 
 	// ORdering algorithm
 	for(i=0; i<m-1; i++){
@@ -91,10 +94,12 @@ float fft(float* q, float* w, float sample_f) {
 	//find magnitudes
 	max=0;
 	place=1;
-	for(i=1;i<(n/2);i++) { 
-		new_[i]=q[i]*q[i]+w[i]*w[i];
-		if(max < new_[i]) {
-			max=new_[i];
+	for(i=1;i<(n/2);i++) {
+		fq = AMPLITUDE * q[i];
+		fw = AMPLITUDE * w[i];
+		amp[i]=fq*fq+fw*fw;
+		if(max < amp[i]) {
+			max=amp[i];
 			place=i;
 		}
 	}
@@ -106,19 +111,13 @@ float fft(float* q, float* w, float sample_f) {
 	//curve fitting for more accuarcy
 	//assumes parabolic shape and uses three point to find the shift in the parabola
 	//using the equation y=A(x-x0)^2+C
-	float y1=new_[place-1],y2=new_[place],y3=new_[place+1];
+	float y1=amp[place-1],y2=amp[place],y3=amp[place+1];
 	float x0=s+(2*s*(y2-y1))/(2*y2-y1-y3);
 	x0=x0/s-1;
 	
 	if(x0 <0 || x0 > 2) { //error
 		return 0;
 	}
-	if(x0 <= 1)  {
-		frequency=frequency-(1-x0)*s;
-	}
-	else {
-		frequency=frequency+(x0-1)*s;
-	}
-	
+	frequency=frequency-(1-x0)*s;
 	return frequency;
 }

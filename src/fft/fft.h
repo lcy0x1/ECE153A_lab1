@@ -29,6 +29,6 @@ Returns
 
 void precompute();
 
-float fft(float* q, float* w, float sample_f);
+float fft(int* q, int* w, float sample_f);
 
 #endif

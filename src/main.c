@@ -48,30 +48,26 @@
 
 #define CLOCK 100000000.0 //clock speed
 
-int int_buffer[SAMPLES];
-static float q[SAMPLES];
-static float w[SAMPLES];
+static int int_buffer[SAMPLES];
+static int q[SAMPLES];
+static int w[SAMPLES];
 
 //void print(char *str);
 
-void read_fsl_values(float* q) {
+void read_fsl_values() {
    int i;
-   unsigned int x;
    stream_grabber_start();
    stream_grabber_wait_enough_samples(SAMPLES*SKIPS);
 
    for(i = 0; i < SAMPLES; i++) {
       int_buffer[i] = stream_grabber_read_sample(i*SKIPS);
-      // xil_printf("%d\n",int_buffer[i]);
-      x = int_buffer[i];
-      q[i] = 3.3*x/67108864.0; // 3.3V and 2^26 bit precision.
-
+      q[i] = int_buffer[i];
+      w[i] = 0;
    }
 }
 
 int main() {
    float sample_f;
-   int l;
    int ticks; //used for timer
    uint32_t Control;
    float frequency; 
@@ -97,29 +93,22 @@ int main() {
       XTmrCtr_Start(&timer, 0);
 
       //Read Values from Microblaze buffer, which is continuously populated by AXI4 Streaming Data FIFO.
-      read_fsl_values(q);
-
+      read_fsl_values();
 
       sample_f = 100*1000*1000/2048.0;
       //xil_printf("sample frequency: %d \r\n",(int)sample_f);
-
-      //zero w array
-      for(l=0;l<SAMPLES;l++)
-         w[l]=0; 
 
       frequency=fft(q,w,sample_f);
 
       //ignore noise below set frequency
       //if(frequency > 200.0) {
-         xil_printf("frequency: %d Hz\r\n", (int)(frequency+.5));
          findNote(frequency);
 
          //get time to run program
          ticks=XTmrCtr_GetValue(&timer, 0);
          XTmrCtr_Stop(&timer, 0);
          tot_time=ticks/CLOCK;
-         xil_printf("program time: %dms \r\n",(int)(1000*tot_time));
-
+         xil_printf("f = %4d Hz, t = %3d ms \r\n", (int)(frequency+.5),(int)(1000*tot_time));
    }
 
 

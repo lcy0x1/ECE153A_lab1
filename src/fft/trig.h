@@ -14,7 +14,7 @@ Returns
 
 #define PI 3.14159265
 
-int factorial(int a); 
+int factorial(int a);
 float sine(float x);
 float cosine(float x);
 

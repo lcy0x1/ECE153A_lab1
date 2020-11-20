@@ -1,7 +1,7 @@
 #ifndef lab2b_h
 #define lab2b_h
 
-#include "qpnano/qpn_port.h"
+#include "../qpnano/qpn_port.h"
 #include "hardware.h"
 #include "display.h"
 

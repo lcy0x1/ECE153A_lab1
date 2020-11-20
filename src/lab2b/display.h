@@ -1,7 +1,7 @@
 #ifndef display_h
 #define display_h
 
-#include "lcd/lcd.h"
+#include "../lcd/lcd.h"
 
 #define UPDATE_VOL_ON 1
 #define UPDATE_VOL_OFF 2

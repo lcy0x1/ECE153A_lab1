@@ -25,8 +25,10 @@ Returns
 #ifndef FFT_H
 #define FFT_H
 
-#define PI 3.141592//65358979323846
+#include "header.h"
 
-float fft(float* q, float* w, int n, int m, float sample_f);
+void precompute();
+
+float fft(float* q, float* w, float sample_f);
 
 #endif

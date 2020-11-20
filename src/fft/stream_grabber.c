@@ -17,10 +17,10 @@ static volatile uint32_t* const reg_readout_addr =
 		(uint32_t*)(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR+4);
 static volatile int32_t* const reg_readout_value =
 		(int32_t*)(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR+8);
-static volatile uint32_t* const reg_seq_counter =
-		(uint32_t*)(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR+12);
-static volatile uint32_t* const reg_seq_counter_latched =
-		(uint32_t*)(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR+16);
+//static volatile uint32_t* const reg_seq_counter =
+//		(uint32_t*)(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR+12);
+//static volatile uint32_t* const reg_seq_counter_latched =
+//		(uint32_t*)(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR+16);
 
 
 

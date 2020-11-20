@@ -1,11 +1,22 @@
 #include "fft.h"
-#include "complex.h"
 #include "trig.h"
 
-static float new_[512];
-static float new_im[512];
+static float cos[SAMPLES];
+static float sin[SAMPLES];
 
-float fft(float* q, float* w, int n, int m, float sample_f) {
+void precompute(){
+	int n = SAMPLES;
+	for(int i=0;i<n;i++){
+		cos[i] = cosine(-PI*i/n);
+		sin[i] = sine(-PI*i/n);
+	}
+}
+
+static float new_[SAMPLES];
+static float new_im[SAMPLES];
+
+float fft(float* q, float* w, float sample_f) {
+	int n = SAMPLES, m = M, angle;
 	int a,b,r,d,e,c;
 	int k,place;
 	a=n/2;
@@ -15,36 +26,39 @@ float fft(float* q, float* w, int n, int m, float sample_f) {
 	float max,frequency;
 
 	// ORdering algorithm
-	for(i=0; i<(m-1); i++){
+	for(i=0; i<m-1; i++){
 		d=0;
 		for (j=0; j<b; j++){
 			for (c=0; c<a; c++){	
 				e=c+d;
-				new_[e]=q[(c*2)+d];
-				new_im[e]=w[(c*2)+d];
-				new_[e+a]=q[2*c+1+d];
-				new_im[e+a]=w[2*c+1+d];
+				r = c*2+d;
+				new_[e]=q[r];
+				new_im[e]=w[r];
+				new_[e+a]=q[r+1];
+				new_im[e+a]=w[r+1];
 			}
-			d+=(n/b);
+			d+=a<<1;
 		}		
-		for (r=0; r<n;r++){
+		for (r=0; r<n; r++){
 			q[r]=new_[r];
 			w[r]=new_im[r];
 		}
-		b*=2;
-		a=n/(2*b);
+		b<<=1;
+		a>>=1;
 	}
 	//end ordering algorithm
 
 	b=1;
+	a=n;
 	k=0;
 	for (j=0; j<m; j++){	
 	//MATH
 		for(i=0; i<n; i+=2){
-			if (i%(n/b)==0 && i!=0)
+			if ((i&(a-1))==0 && i!=0)
 				k++;
-			real=mult_real(q[i+1], w[i+1], cosine(-PI*k/b), sine(-PI*k/b));	
-			imagine=mult_im(q[i+1], w[i+1], cosine(-PI*k/b), sine(-PI*k/b));
+			angle = k << (m-j);
+			real = q[i+1] * cos[angle] - w[i+1] * sin[angle];
+			imagine = q[i+1] * sin[angle] + w[i+1] * cos[angle];
 			new_[i]=q[i]+real;
 			new_im[i]=w[i]+imagine;
 			new_[i+1]=q[i]-real;
@@ -69,7 +83,8 @@ float fft(float* q, float* w, int n, int m, float sample_f) {
 			w[i]=new_im[i];
 		}
 	//END REORDER	
-		b*=2;
+		b<<=1;
+		a>>=1;
 		k=0;		
 	}
 

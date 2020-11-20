@@ -48,68 +48,79 @@
 
 #define CLOCK 100000000.0 //clock speed
 
-static int int_buffer[SAMPLES];
 static int q[SAMPLES];
 static int w[SAMPLES];
 
 //void print(char *str);
 
+void analysis(){
+	u32 a;
+	asm("add %0, r0, r14":"=r"(a));
+}
+
 void read_fsl_values() {
-   int i;
-   stream_grabber_start();
-   stream_grabber_wait_enough_samples(SAMPLES*SKIPS);
-   for(i = 0; i < SAMPLES; i++) {
-      int_buffer[i] = stream_grabber_read_sample(i*SKIPS);
-      q[i] = int_buffer[i];
-      w[i] = 0;
-   }
+	int i, j, sum;
+	stream_grabber_start();
+	stream_grabber_wait_enough_samples(SAMPLES * SKIPS);
+	for (i = 0; i < SAMPLES; i++) {
+		sum = 0;
+		for (j = 0; j < SKIPS; j++) {
+			sum += stream_grabber_read_sample(i * SKIPS + j) / SKIPS;
+		}
+		q[i] = sum;
+		w[i] = 0;
+
+	}
 }
 
 int main() {
-   float sample_f;
-   int ticks; //used for timer
-   uint32_t Control;
-   float frequency; 
-   float tot_time; //time to run program
+	float sample_f;
+	int ticks; //used for timer
+	uint32_t Control;
+	float frequency;
+	float tot_time; //time to run program
 
-   Xil_ICacheInvalidate();
-   Xil_ICacheEnable();
-   Xil_DCacheInvalidate();
-   Xil_DCacheEnable();
+	Xil_ICacheInvalidate()
+	;
+	Xil_ICacheEnable();
+	Xil_DCacheInvalidate()
+	;
+	Xil_DCacheEnable();
 
-   //set up timer
-   XTmrCtr timer;
-   XTmrCtr_Initialize(&timer, XPAR_AXI_TIMER_0_DEVICE_ID);
-   Control = XTmrCtr_GetOptions(&timer, 0) | XTC_CAPTURE_MODE_OPTION | XTC_INT_MODE_OPTION;
-   XTmrCtr_SetOptions(&timer, 0, Control);
+	//set up timer
+	XTmrCtr timer;
+	XTmrCtr_Initialize(&timer, XPAR_AXI_TIMER_0_DEVICE_ID);
+	Control = XTmrCtr_GetOptions(&timer,
+			0) | XTC_CAPTURE_MODE_OPTION | XTC_INT_MODE_OPTION;
+	XTmrCtr_SetOptions(&timer, 0, Control);
 
+	print("Hello World\n\r");
 
-   print("Hello World\n\r");
+	precompute(); // precompute the sine and cosine table
 
-   precompute();// precompute the sine and cosine table
+	while (1) {
+		XTmrCtr_Start(&timer, 0);
 
-   while(1) { 
-      XTmrCtr_Start(&timer, 0);
+		//Read Values from Microblaze buffer, which is continuously populated by AXI4 Streaming Data FIFO.
+		read_fsl_values();
 
-      //Read Values from Microblaze buffer, which is continuously populated by AXI4 Streaming Data FIFO.
-      read_fsl_values();
+		sample_f = 100 * 1000 * 1000 / 2048.0 / SKIPS;
+		//xil_printf("sample frequency: %d \r\n",(int)sample_f);
 
-      sample_f = 100*1000*1000/2048.0;
-      //xil_printf("sample frequency: %d \r\n",(int)sample_f);
+		frequency = fft(q, w, sample_f);
 
-      frequency=fft(q,w,sample_f);
+		//ignore noise below set frequency
+		//if(frequency > 200.0) {
+		findNote(frequency);
 
-      //ignore noise below set frequency
-      //if(frequency > 200.0) {
-         findNote(frequency);
+		//get time to run program
+		ticks = XTmrCtr_GetValue(&timer, 0);
+		XTmrCtr_Stop(&timer, 0);
+		tot_time = ticks / CLOCK;
+		xil_printf("f = %4d Hz, t = %3d ms \r\n", (int) (frequency + .5),
+				(int) (1000 * tot_time));
+	}
 
-         //get time to run program
-         ticks=XTmrCtr_GetValue(&timer, 0);
-         XTmrCtr_Stop(&timer, 0);
-         tot_time=ticks/CLOCK;
-         xil_printf("f = %4d Hz, t = %3d ms \r\n", (int)(frequency+.5),(int)(1000*tot_time));
-   }
-
-
-   return 0;
+	return 0;
 }
+

@@ -19,18 +19,14 @@ static int new_im[SAMPLES];
 static float amp[SAMPLES];
 
 float fft(int* q, int* w, float sample_f) {
-	int n = SAMPLES, m = M, angle;
-	int a,b,r,d,e,c;
-	int k,place;
-	a=n/2;
-	b=1;
-	int i,j;
-	int real=0,imagine=0;
-	int dq,dw,dc,ds;
+	int n = SAMPLES, m = M;
+	int a,b,r,d,e,c,k,place,i,j,re,im,dq,dw,angle;
 	float max,frequency;
 	float fq, fw;
 
-	// ORdering algorithm
+	// Ordering algorithm
+	a=n/2;
+	b=1;
 	for(i=0; i<m-1; i++){
 		d=0;
 		for (j=0; j<b; j++){
@@ -65,13 +61,13 @@ float fft(int* q, int* w, float sample_f) {
 			angle = k << (m-j);
 			dq = (q[i+1]+OFF) >> SIN_AMP;
 			dw = (w[i+1]+OFF) >> SIN_AMP;
-			real = dq * cos[angle] - dw * sin[angle];
-			imagine = dq * sin[angle] + dw * cos[angle];
+			re = dq * cos[angle] - dw * sin[angle];
+			im = dq * sin[angle] + dw * cos[angle];
 
-			new_[i]=q[i]+real;
-			new_im[i]=w[i]+imagine;
-			new_[i+1]=q[i]-real;
-			new_im[i+1]=w[i]-imagine;
+			new_[i]=q[i]+re;
+			new_im[i]=w[i]+im;
+			new_[i+1]=q[i]-re;
+			new_im[i+1]=w[i]-im;
 
 		}
 		for (i=0; i<n; i++){

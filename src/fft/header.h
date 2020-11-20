@@ -5,5 +5,7 @@
 #define SAMPLES 512
 #define SKIPS 1 // AXI4 Streaming Data FIFO has size 512
 #define AMPLITUDE (3.3/67108864.0)
+#define SIN_AMP 15
+#define OFF 16384
 
 #endif

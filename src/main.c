@@ -58,7 +58,6 @@ void read_fsl_values() {
    int i;
    stream_grabber_start();
    stream_grabber_wait_enough_samples(SAMPLES*SKIPS);
-
    for(i = 0; i < SAMPLES; i++) {
       int_buffer[i] = stream_grabber_read_sample(i*SKIPS);
       q[i] = int_buffer[i];

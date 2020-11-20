@@ -1,14 +1,15 @@
 #include "fft.h"
 #include "trig.h"
 
-static float cos[SAMPLES];
-static float sin[SAMPLES];
+static int cos[SAMPLES];
+static int sin[SAMPLES];
 
 void precompute(){
 	int n = SAMPLES;
+	int amp = 1 << SIN_AMP;
 	for(int i=0;i<n;i++){
-		cos[i] = cosine(-PI*i/n);
-		sin[i] = sine(-PI*i/n);
+		cos[i] = (int)(cosine(-PI*i/n) * amp + 0.5);
+		sin[i] = (int)(sine(-PI*i/n) * amp + 0.5);
 	}
 }
 
@@ -24,7 +25,8 @@ float fft(int* q, int* w, float sample_f) {
 	a=n/2;
 	b=1;
 	int i,j;
-	float real=0,imagine=0;
+	int real=0,imagine=0;
+	int dq,dw,dc,ds;
 	float max,frequency;
 	float fq, fw;
 
@@ -59,9 +61,13 @@ float fft(int* q, int* w, float sample_f) {
 		for(i=0; i<n; i+=2){
 			if ((i&(a-1))==0 && i!=0)
 				k++;
+
 			angle = k << (m-j);
-			real = q[i+1] * cos[angle] - w[i+1] * sin[angle];
-			imagine = q[i+1] * sin[angle] + w[i+1] * cos[angle];
+			dq = (q[i+1]+OFF) >> SIN_AMP;
+			dw = (w[i+1]+OFF) >> SIN_AMP;
+			real = dq * cos[angle] - dw * sin[angle];
+			imagine = dq * sin[angle] + dw * cos[angle];
+
 			new_[i]=q[i]+real;
 			new_im[i]=w[i]+imagine;
 			new_[i+1]=q[i]-real;

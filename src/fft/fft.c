@@ -20,7 +20,7 @@ static float amp[SAMPLES];
 
 float fft(int* q, int* w, float sample_f) {
 	int n = SAMPLES, m = M;
-	int a,b,r,d,e,c,k,place,i,j,re,im,dq,dw,angle;
+	int a,b,r,d,e,c,place,i,j,re,im,dq,dw,angle;
 	float max,frequency;
 	float fq, fw;
 
@@ -49,16 +49,11 @@ float fft(int* q, int* w, float sample_f) {
 	}
 	//end ordering algorithm
 
-	b=1;
-	a=n;
-	k=0;
 	for (j=0; j<m; j++){	
 	//MATH
+		a = ~((n>>j)-1);
 		for(i=0; i<n; i+=2){
-			if ((i&(a-1))==0 && i!=0)
-				k++;
-
-			angle = k << (m-j);
+			angle = i&a;
 			dq = (q[i+1]+OFF) >> SIN_AMP;
 			dw = (w[i+1]+OFF) >> SIN_AMP;
 			re = dq * cos[angle] - dw * sin[angle];
@@ -87,10 +82,7 @@ float fft(int* q, int* w, float sample_f) {
 			q[i]=new_[i];
 			w[i]=new_im[i];
 		}
-	//END REORDER	
-		b<<=1;
-		a>>=1;
-		k=0;		
+	//END REORDER
 	}
 
 	//find magnitudes

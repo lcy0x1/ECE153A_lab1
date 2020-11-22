@@ -60,8 +60,6 @@ void analysis(){
 
 void read_fsl_values() {
 	int i, j, sum;
-	stream_grabber_start();
-	stream_grabber_wait_enough_samples(SAMPLES * SKIPS);
 	for (i = 0; i < SAMPLES; i++) {
 		sum = 0;
 		for (j = 0; j < SKIPS; j++) {
@@ -97,21 +95,23 @@ int main() {
 	print("Hello World\n\r");
 
 	precompute(); // precompute the sine and cosine table
-
+	stream_grabber_start();
+	stream_grabber_wait_enough_samples(SAMPLES * SKIPS);
 	while (1) {
 		XTmrCtr_Start(&timer, 0);
 
 		//Read Values from Microblaze buffer, which is continuously populated by AXI4 Streaming Data FIFO.
 		read_fsl_values();
+		// start to grab the data for next cycle
+		stream_grabber_start();
 
-		sample_f = 100 * 1000 * 1000 / 2048.0 / SKIPS;
-		//xil_printf("sample frequency: %d \r\n",(int)sample_f);
-
+		// do fft
+		sample_f = 100000000 / 2048.0 / SKIPS;
 		frequency = fft(q, w, sample_f);
-
-		//ignore noise below set frequency
-		//if(frequency > 200.0) {
 		findNote(frequency);
+
+		// wait until the sampling for next cycle finished
+		stream_grabber_wait_enough_samples(SAMPLES * SKIPS);
 
 		//get time to run program
 		ticks = XTmrCtr_GetValue(&timer, 0);

@@ -45,11 +45,14 @@
 #include "fft/fft.h"
 #include "fft/note.h"
 #include "fft/stream_grabber.h"
+#include "extra.h"
 
 #define CLOCK 100000000.0 //clock speed
 
 static int q[SAMPLES];
 static int w[SAMPLES];
+
+void intr(void);
 
 //void print(char *str);
 
@@ -94,6 +97,11 @@ int main() {
 
 	print("Hello World\n\r");
 
+	if (extra_method(intr) == XST_SUCCESS)
+			print("Initialization succeed\n\r");
+		else
+			print("Initialization failed\n\r");
+
 	precompute(); // precompute the sine and cosine table
 	stream_grabber_start();
 	stream_grabber_wait_enough_samples(SAMPLES * SKIPS);
@@ -117,10 +125,15 @@ int main() {
 		ticks = XTmrCtr_GetValue(&timer, 0);
 		XTmrCtr_Stop(&timer, 0);
 		tot_time = ticks / CLOCK;
-		xil_printf("f = %4d Hz, t = %3d ms \r\n", (int) (frequency + .5),
-				(int) (1000 * tot_time));
+		//xil_printf("f = %4d Hz, t = %3d ms \r\n", (int) (frequency + .5),
+		//		(int) (1000 * tot_time));
 	}
 
 	return 0;
+}
+
+
+void intr(void) {
+
 }
 

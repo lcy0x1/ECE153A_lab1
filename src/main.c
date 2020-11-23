@@ -31,34 +31,40 @@
  *   ps7_uart    115200 (configured by bootrom/bsp)
  */
 
-#include "fft/header.h"
 #include <stdio.h>
-#include "xil_cache.h"
 #include <mb_interface.h>
-
-#include "xparameters.h"
 #include <xil_types.h>
 #include <xil_assert.h>
-
 #include <xio.h>
 #include "xtmrctr.h"
+#include "xil_cache.h"
+#include "xparameters.h"
+
+#include "hardware.h"
+#include "fft/header.h"
 #include "fft/fft.h"
 #include "fft/note.h"
 #include "fft/stream_grabber.h"
-#include "extra.h"
+
+#define PROFILING 1
+#define PROFILE_SAMPLE 1000
 
 #define CLOCK 100000000.0 //clock speed
+
+static u32 addr[PROFILE_SAMPLE];
+static int addr_index = 0;
 
 static int q[SAMPLES];
 static int w[SAMPLES];
 
-void intr(void);
-
-//void print(char *str);
+XTmrCtr timer;
 
 void analysis(){
+	if(addr_index >= PROFILE_SAMPLE)
+		return;
 	u32 a;
 	asm("add %0, r0, r14":"=r"(a));
+	addr[addr_index++] = a;
 }
 
 void read_fsl_values() {
@@ -76,64 +82,75 @@ void read_fsl_values() {
 
 int main() {
 	float sample_f;
-	int ticks; //used for timer
-	uint32_t Control;
 	float frequency;
-	float tot_time; //time to run program
 
 	Xil_ICacheInvalidate()
-	;
 	Xil_ICacheEnable();
 	Xil_DCacheInvalidate()
-	;
 	Xil_DCacheEnable();
 
+#if !PROFILING
+	int ticks; //used for timer
+	uint32_t Control;
+	float tot_time; //time to run program
 	//set up timer
-	XTmrCtr timer;
 	XTmrCtr_Initialize(&timer, XPAR_AXI_TIMER_0_DEVICE_ID);
-	Control = XTmrCtr_GetOptions(&timer,
-			0) | XTC_CAPTURE_MODE_OPTION | XTC_INT_MODE_OPTION;
+	Control = XTmrCtr_GetOptions(&timer, 0) | XTC_CAPTURE_MODE_OPTION | XTC_INT_MODE_OPTION;
 	XTmrCtr_SetOptions(&timer, 0, Control);
+#endif
+#if PROFILING
+	init();
+#endif
 
 	print("Hello World\n\r");
-
-	if (extra_method(intr) == XST_SUCCESS)
-			print("Initialization succeed\n\r");
-		else
-			print("Initialization failed\n\r");
 
 	precompute(); // precompute the sine and cosine table
 	stream_grabber_start();
 	stream_grabber_wait_enough_samples(SAMPLES * SKIPS);
+
+#if PROFILING
+	microblaze_enable_interrupts();
+#endif
+
 	while (1) {
+
+#if !PROFILING
 		XTmrCtr_Start(&timer, 0);
+#endif
 
 		//Read Values from Microblaze buffer, which is continuously populated by AXI4 Streaming Data FIFO.
 		read_fsl_values();
 		// start to grab the data for next cycle
 		stream_grabber_start();
-
 		// do fft
 		sample_f = 100000000 / 2048.0 / SKIPS;
 		frequency = fft(q, w, sample_f);
 		findNote(frequency);
-
 		// wait until the sampling for next cycle finished
 		stream_grabber_wait_enough_samples(SAMPLES * SKIPS);
 
+#if !PROFILING
 		//get time to run program
 		ticks = XTmrCtr_GetValue(&timer, 0);
 		XTmrCtr_Stop(&timer, 0);
 		tot_time = ticks / CLOCK;
-		//xil_printf("f = %4d Hz, t = %3d ms \r\n", (int) (frequency + .5),
-		//		(int) (1000 * tot_time));
+		xil_printf("f = %4d Hz, t = %3d ms \r\n", (int) (frequency + .5),
+				(int) (1000 * tot_time));
+#endif
+#if PROFILING
+		if(addr_index >= PROFILE_SAMPLE){
+			for(int i=0;i<PROFILE_SAMPLE;i++){
+				xil_printf("%x,",addr[i]);
+				if(i%20==19)
+					xil_printf("\n\r");
+			}
+			return 0;
+		}
+#endif
+
 	}
 
 	return 0;
 }
 
-
-void intr(void) {
-
-}
 

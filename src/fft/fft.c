@@ -16,13 +16,14 @@ void precompute(){
 static int new_[SAMPLES];
 static int new_im[SAMPLES];
 
-static float amp[SAMPLES];
+//static float amp[SAMPLES];
 
 float fft(int* q, int* w, float sample_f) {
-	int n = SAMPLES, m = M;
-	int a,b,r,d,e,c,place,i,j,re,im,dq,dw,angle;
-	float max,frequency;
-	float fq, fw;
+	int m = M;
+	int n = 1 << m;
+	int a,b,r,d,e,c,place,i,j;
+	int max;
+	int fq, fw;
 
 	// Ordering algorithm
 	a=n/2;
@@ -48,6 +49,8 @@ float fft(int* q, int* w, float sample_f) {
 		a>>=1;
 	}
 	//end ordering algorithm
+
+	int re,im,dq,dw,angle;
 
 	for (j=0; j<m; j++){	
 	//MATH
@@ -89,29 +92,26 @@ float fft(int* q, int* w, float sample_f) {
 	max=0;
 	place=1;
 	for(i=1;i<(n/2);i++) {
-		fq = AMPLITUDE * q[i];
-		fw = AMPLITUDE * w[i];
-		amp[i]=fq*fq+fw*fw;
-		if(max < amp[i]) {
-			max=amp[i];
+		fq = q[i] >> 17;
+		fw = w[i] >> 17;
+		new_[i]=fq*fq+fw*fw;
+		if(max < new_[i]) {
+			max=new_[i];
 			place=i;
 		}
 	}
 	
 	float s=sample_f/n; //spacing of bins
-	
-	frequency = (sample_f/n)*place;
 
 	//curve fitting for more accuarcy
 	//assumes parabolic shape and uses three point to find the shift in the parabola
 	//using the equation y=A(x-x0)^2+C
-	float y1=amp[place-1],y2=amp[place],y3=amp[place+1];
+	int y1=new_[place-1],y2=new_[place],y3=new_[place+1];
 	float x0=s+(2*s*(y2-y1))/(2*y2-y1-y3);
 	x0=x0/s-1;
 	
 	if(x0 <0 || x0 > 2) { //error
 		return 0;
 	}
-	frequency=frequency-(1-x0)*s;
-	return frequency;
+	return place*s-(1-x0)*s;
 }

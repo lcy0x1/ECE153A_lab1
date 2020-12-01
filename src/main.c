@@ -46,7 +46,7 @@
 #include "fft/note.h"
 #include "fft/stream_grabber.h"
 
-#define PROFILING 1
+#define PROFILING 0
 #define PROFILE_SAMPLE 1000
 
 #define CLOCK 100000000.0 //clock speed

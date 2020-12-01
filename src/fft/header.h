@@ -1,19 +1,26 @@
 #ifndef HEADER_H
 #define HEADER_H
 
+#define WINDOW_SIZE 32
+
+#define CUTOFF 1250
 #define SAMPLES 512
 #define SIN_AMP 15
 #define SQ_AMP 17
-#define CUTOFF 1250
-#define OFF_SIN (1<<14)
-#define OFF_SQ (1<<16)
+#define OFF_SIN (1<<(SIN_AMP-1))
+#define OFF_SQ (1<<(SQ_AMP-1))
 
 // waiting for input, called repeatedly by stream grabber wait
 // delay: estimated wait duration, in number of samples left to be captured
 void stream_wait(int delay);
 void precompute();
+
 float auto_range(void);
 int find_note(float freq);
+void add_window(float freq);
+float get_mean();
+float get_stdev();
+
 char* note_char(int note);
 
 void stream_grabber_start();

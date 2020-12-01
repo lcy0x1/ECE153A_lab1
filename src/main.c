@@ -44,10 +44,6 @@
 #include "fft/header.h"
 
 int main() {
-	float frequency;
-	int note;
-	int octave;
-	int cent;
 
 	Xil_ICacheInvalidate()
 	Xil_ICacheEnable();
@@ -59,14 +55,27 @@ int main() {
 	precompute(); // precompute the sine and cosine table
 	stream_grabber_start();
 
+
+	int note;
+	int octave;
+	int cent;
+	float freq;
+	float stdev;
+	int stable;
 	while (1) {
-		frequency = auto_range();
-		note = find_note(frequency);
+		add_window(auto_range());
+		freq = get_mean();
+		stdev = get_stdev();
+		// stdev < 5 cent means 95% CI for 10 cent
+		stable = stdev < 0.00289647 * freq;
+
+		note = find_note(freq);
 		cent = note % 100;
 		octave = note / 1200;
 		note = note / 100 % 12;
 
-		xil_printf("%5d, %2d, %2d, %3d \n\r", (int)(frequency+0.5), octave, note, cent);
+
+		xil_printf("%5d, %1d, %2d, %2d, %3d \n\r", (int)(freq+0.5), stable, octave, note, cent);
 	}
 
 	return 0;

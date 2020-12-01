@@ -22,7 +22,6 @@ static int w[SAMPLES];
 float fft(int m, float sample_f) {
 	int n = 1 << m;
 	int a,b,r,d,e,c,i,j;
-	int max;
 
 	// Ordering algorithm
 	a=n/2;
@@ -49,20 +48,22 @@ float fft(int m, float sample_f) {
 	}
 	//end ordering algorithm
 
+	int re,im,dq,dw,angle;
+
 	for (j=0; j<m; j++){	
 	//MATH
 		a = ~((n>>j)-1);
 		for(i=0; i<n; i+=2){
-			c = i&a;
-			b = (q[i+1]+OFF) >> SIN_AMP;
-			r = (w[i+1]+OFF) >> SIN_AMP;
-			d = b * cos[c] - r * sin[c];
-			e = b * sin[c] + r * cos[c];
+			angle = (i&a) << (9-m);
+			dq = (q[i+1]+OFF) >> SIN_AMP;
+			dw = (w[i+1]+OFF) >> SIN_AMP;
+			re = dq * cos[angle] - dw * sin[angle];
+			im = dq * sin[angle] + dw * cos[angle];
 
-			new_[i]=q[i]+d;
-			new_im[i]=w[i]+e;
-			new_[i+1]=q[i]-d;
-			new_im[i+1]=w[i]-e;
+			new_[i]=q[i]+re;
+			new_im[i]=w[i]+im;
+			new_[i+1]=q[i]-re;
+			new_im[i+1]=w[i]-im;
 
 		}
 		for (i=0; i<n; i++){
@@ -72,12 +73,11 @@ float fft(int m, float sample_f) {
 	//END MATH
 
 	//REORDER
-		b = n/2;
-		for (i=0; i<b; i++){
+		for (i=0; i<n/2; i++){
 			new_[i]=q[2*i];
+			new_[i+(n/2)]=q[2*i+1];
 			new_im[i]=w[2*i];
-			new_[i+b]=q[2*i+1];
-			new_im[i+b]=w[2*i+1];
+			new_im[i+(n/2)]=w[2*i+1];
 		}
 		for (i=0; i<n; i++){
 			q[i]=new_[i];
@@ -86,16 +86,19 @@ float fft(int m, float sample_f) {
 	//END REORDER
 	}
 
+	int place,max;
+	int fq, fw;
+
 	//find magnitudes
 	max=0;
-	a=1;
+	place=1;
 	for(i=1;i<(n/2);i++) {
-		b = q[i] >> 17;
-		c = w[i] >> 17;
-		new_[i] = b * b + c * c;
+		fq = q[i] >> 17;
+		fw = w[i] >> 17;
+		new_[i]=fq*fq+fw*fw;
 		if(max < new_[i]) {
 			max=new_[i];
-			a=i;
+			place=i;
 		}
 	}
 	
@@ -104,14 +107,14 @@ float fft(int m, float sample_f) {
 	//curve fitting for more accuarcy
 	//assumes parabolic shape and uses three point to find the shift in the parabola
 	//using the equation y=A(x-x0)^2+C
-	int y1=new_[a-1],y2=new_[a],y3=new_[a+1];
+	int y1=new_[place-1],y2=new_[place],y3=new_[place+1];
 	float x0=s+(2*s*(y2-y1))/(2*y2-y1-y3);
 	x0=x0/s-1;
 	
 	if(x0 <0 || x0 > 2) { //error
 		return 0;
 	}
-	return s*a-(1-x0)*s;
+	return place*s-(1-x0)*s;
 }
 
 float stream_freq = 100000000 / 2048.0;

@@ -42,8 +42,6 @@
 
 #include "hardware.h"
 #include "fft/header.h"
-#include "fft/note.h"
-#include "fft/stream_grabber.h"
 
 int main() {
 	float frequency;
@@ -63,7 +61,7 @@ int main() {
 
 	while (1) {
 		frequency = auto_range();
-		note = findNote(frequency);
+		note = find_note(frequency);
 		cent = note % 100;
 		octave = note / 1200;
 		note = note / 100 % 12;

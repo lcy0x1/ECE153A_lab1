@@ -1,6 +1,5 @@
 #include "trig.h"
 #include "header.h"
-#include "stream_grabber.h"
 
 static int cos[SAMPLES];
 static int sin[SAMPLES];
@@ -55,8 +54,8 @@ float fft(int m, float sample_f) {
 		a = ~((n>>j)-1);
 		for(i=0; i<n; i+=2){
 			angle = (i&a) << (9-m);
-			dq = (q[i+1]+OFF) >> SIN_AMP;
-			dw = (w[i+1]+OFF) >> SIN_AMP;
+			dq = (q[i+1]+OFF_SIN) >> SIN_AMP;
+			dw = (w[i+1]+OFF_SIN) >> SIN_AMP;
 			re = dq * cos[angle] - dw * sin[angle];
 			im = dq * sin[angle] + dw * cos[angle];
 
@@ -86,27 +85,19 @@ float fft(int m, float sample_f) {
 	//END REORDER
 	}
 
-	int place,max;
-	int fq, fw;
-
-	//find magnitudes
+	int place,max, fq, fw;
 	max=0;
 	place=1;
-	for(i=1;i<(n/2);i++) {
-		fq = q[i] >> 17;
-		fw = w[i] >> 17;
-		new_[i]=fq*fq+fw*fw;
+	for(i=1; i<(n/2); i++) {
+		fq = (q[i] + OFF_SQ) >> SQ_AMP;
+		fw = (w[i] + OFF_SQ) >> SQ_AMP;
+		new_[i] = fq * fq + fw * fw;
 		if(max < new_[i]) {
-			max=new_[i];
-			place=i;
+			max = new_[i];
+			place = i;
 		}
 	}
-	
-	float s=sample_f/n; //spacing of bins
-
-	//curve fitting for more accuarcy
-	//assumes parabolic shape and uses three point to find the shift in the parabola
-	//using the equation y=A(x-x0)^2+C
+	float s=sample_f/n;
 	int y1=new_[place-1],y2=new_[place],y3=new_[place+1];
 	float x0=s+(2*s*(y2-y1))/(2*y2-y1-y3);
 	x0=x0/s-1;
@@ -138,16 +129,15 @@ float one_fft(int m, int sk, int restart){
 }
 
 float auto_range(void){
-
 	float freq = one_fft(7, 0, 0);
-	if(freq > 10000)
+	if(freq > CUTOFF << 3)
 		return one_fft(9, 0, 1);
-	if(freq > 5000)
+	if(freq > CUTOFF << 2)
 		return one_fft(9, 1, 1);
 	freq = one_fft(7, 2, 0);
-	if(freq > 2500)
+	if(freq > CUTOFF << 1)
 		return one_fft(8, 2, 1);
-	if(freq > 1250)
+	if(freq > CUTOFF)
 		return one_fft(7, 3, 1);
 	return one_fft(7, 4, 1);
 }

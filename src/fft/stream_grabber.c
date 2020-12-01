@@ -8,7 +8,6 @@
 #include <stdint.h>
 #include "xparameters.h"
 #include "header.h"
-#include "stream_grabber.h"
 
 static volatile uint32_t* const reg_start =
 		(uint32_t*)(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR);

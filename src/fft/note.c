@@ -1,14 +1,12 @@
-#include "note.h"
+#include "header.h"
 #include <math.h>
-//#include "lcd.h"
 
-//array to store note names for findNote
 static char notes[12][3]={"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"};
 
-//finds and prints note of frequency and deviation from note
-int findNote(float f) {
+int find_note(float freq){
+	return (int)(log2(freq/440)*1200+5700.5);
+}
 
-	int ans = round(log2(f/440)*1200+5700);
-
-	return ans;
+char* note_char(int note){
+	return notes[note];
 }

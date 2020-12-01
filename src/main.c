@@ -42,115 +42,41 @@
 
 #include "hardware.h"
 #include "fft/header.h"
-#include "fft/fft.h"
 #include "fft/note.h"
 #include "fft/stream_grabber.h"
 
-#define PROFILING 1
-#define PROFILE_SAMPLE 1000
-
-#define CLOCK 100000000.0 //clock speed
-
-static u32 addr[PROFILE_SAMPLE];
-static int addr_index = 0;
-
-static int q[SAMPLES];
-static int w[SAMPLES];
-
-XTmrCtr timer;
-
-void analysis(){
-	if(addr_index >= PROFILE_SAMPLE)
-		return;
-	u32 a;
-	asm("add %0, r0, r14":"=r"(a));
-	addr[addr_index++] = a;
-}
-
-void read_fsl_values() {
-	int i, j, sum;
-	for (i = 0; i < SAMPLES; i++) {
-		sum = 0;
-		for (j = 0; j < SKIPS; j++) {
-			sum += stream_grabber_read_sample(i * SKIPS + j) / SKIPS;
-		}
-		q[i] = sum;
-		w[i] = 0;
-
-	}
-}
-
 int main() {
-	float sample_f;
 	float frequency;
+	int note;
+	int octave;
+	int cent;
 
 	Xil_ICacheInvalidate()
 	Xil_ICacheEnable();
 	Xil_DCacheInvalidate()
 	Xil_DCacheEnable();
 
-#if !PROFILING
-	int ticks; //used for timer
-	uint32_t Control;
-	float tot_time; //time to run program
-	//set up timer
-	XTmrCtr_Initialize(&timer, XPAR_AXI_TIMER_0_DEVICE_ID);
-	Control = XTmrCtr_GetOptions(&timer, 0) | XTC_CAPTURE_MODE_OPTION | XTC_INT_MODE_OPTION;
-	XTmrCtr_SetOptions(&timer, 0, Control);
-#endif
-#if PROFILING
-	init();
-#endif
-
 	print("Hello World\n\r");
 
 	precompute(); // precompute the sine and cosine table
 	stream_grabber_start();
-	stream_grabber_wait_enough_samples(SAMPLES * SKIPS);
-
-#if PROFILING
-	microblaze_enable_interrupts();
-#endif
 
 	while (1) {
+		frequency = auto_range();
+		note = findNote(frequency);
+		cent = note % 100;
+		octave = note / 1200;
+		note = note / 100 % 12;
 
-#if !PROFILING
-		XTmrCtr_Start(&timer, 0);
-#endif
-
-		//Read Values from Microblaze buffer, which is continuously populated by AXI4 Streaming Data FIFO.
-		read_fsl_values();
-		// start to grab the data for next cycle
-		stream_grabber_start();
-		// do fft
-		sample_f = 100000000 / 2048.0 / SKIPS;
-		frequency = fft(q, w, sample_f);
-		findNote(frequency);
-		// wait until the sampling for next cycle finished
-		stream_grabber_wait_enough_samples(SAMPLES * SKIPS);
-
-#if !PROFILING
-		//get time to run program
-		ticks = XTmrCtr_GetValue(&timer, 0);
-		XTmrCtr_Stop(&timer, 0);
-		tot_time = ticks / CLOCK;
-		xil_printf("f = %4d Hz, t = %3d ms \r\n", (int) (frequency + .5),
-				(int) (1000 * tot_time));
-#endif
-#if PROFILING
-		if(addr_index >= PROFILE_SAMPLE){
-			for(int i=0;i<PROFILE_SAMPLE;i++){
-				xil_printf("%x,",addr[i]);
-				if(i%20==19)
-					xil_printf("\n\r");
-			}
-			return 0;
-		}
-#endif
-
+		xil_printf("%5d, %2d, %2d, %3d \n\r", (int)(frequency+0.5), octave, note, cent);
 	}
 
 	return 0;
+}
+
+// 512 delay is 10ms
+void stream_wait(int delay){
+
 }
 
 

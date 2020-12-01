@@ -1,5 +1,6 @@
-#include "fft.h"
 #include "trig.h"
+#include "header.h"
+#include "stream_grabber.h"
 
 static int cos[SAMPLES];
 static int sin[SAMPLES];
@@ -15,14 +16,13 @@ void precompute(){
 
 static int new_[SAMPLES];
 static int new_im[SAMPLES];
+static int q[SAMPLES];
+static int w[SAMPLES];
 
-static float amp[SAMPLES];
-
-float fft(int* q, int* w, float sample_f) {
-	int n = SAMPLES, m = M;
-	int a,b,r,d,e,c,place,i,j,re,im,dq,dw,angle;
-	float max,frequency;
-	float fq, fw;
+float fft(int m, float sample_f) {
+	int n = 1 << m;
+	int a,b,r,d,e,c,i,j;
+	int max;
 
 	// Ordering algorithm
 	a=n/2;
@@ -53,16 +53,16 @@ float fft(int* q, int* w, float sample_f) {
 	//MATH
 		a = ~((n>>j)-1);
 		for(i=0; i<n; i+=2){
-			angle = i&a;
-			dq = (q[i+1]+OFF) >> SIN_AMP;
-			dw = (w[i+1]+OFF) >> SIN_AMP;
-			re = dq * cos[angle] - dw * sin[angle];
-			im = dq * sin[angle] + dw * cos[angle];
+			c = i&a;
+			b = (q[i+1]+OFF) >> SIN_AMP;
+			r = (w[i+1]+OFF) >> SIN_AMP;
+			d = b * cos[c] - r * sin[c];
+			e = b * sin[c] + r * cos[c];
 
-			new_[i]=q[i]+re;
-			new_im[i]=w[i]+im;
-			new_[i+1]=q[i]-re;
-			new_im[i+1]=w[i]-im;
+			new_[i]=q[i]+d;
+			new_im[i]=w[i]+e;
+			new_[i+1]=q[i]-d;
+			new_im[i+1]=w[i]-e;
 
 		}
 		for (i=0; i<n; i++){
@@ -72,11 +72,12 @@ float fft(int* q, int* w, float sample_f) {
 	//END MATH
 
 	//REORDER
-		for (i=0; i<n/2; i++){
+		b = n/2;
+		for (i=0; i<b; i++){
 			new_[i]=q[2*i];
-			new_[i+(n/2)]=q[2*i+1];
 			new_im[i]=w[2*i];
-			new_im[i+(n/2)]=w[2*i+1];
+			new_[i+b]=q[2*i+1];
+			new_im[i+b]=w[2*i+1];
 		}
 		for (i=0; i<n; i++){
 			q[i]=new_[i];
@@ -87,31 +88,63 @@ float fft(int* q, int* w, float sample_f) {
 
 	//find magnitudes
 	max=0;
-	place=1;
+	a=1;
 	for(i=1;i<(n/2);i++) {
-		fq = AMPLITUDE * q[i];
-		fw = AMPLITUDE * w[i];
-		amp[i]=fq*fq+fw*fw;
-		if(max < amp[i]) {
-			max=amp[i];
-			place=i;
+		b = q[i] >> 17;
+		c = w[i] >> 17;
+		new_[i] = b * b + c * c;
+		if(max < new_[i]) {
+			max=new_[i];
+			a=i;
 		}
 	}
 	
 	float s=sample_f/n; //spacing of bins
-	
-	frequency = (sample_f/n)*place;
 
 	//curve fitting for more accuarcy
 	//assumes parabolic shape and uses three point to find the shift in the parabola
 	//using the equation y=A(x-x0)^2+C
-	float y1=amp[place-1],y2=amp[place],y3=amp[place+1];
+	int y1=new_[a-1],y2=new_[a],y3=new_[a+1];
 	float x0=s+(2*s*(y2-y1))/(2*y2-y1-y3);
 	x0=x0/s-1;
 	
 	if(x0 <0 || x0 > 2) { //error
 		return 0;
 	}
-	frequency=frequency-(1-x0)*s;
-	return frequency;
+	return s*a-(1-x0)*s;
+}
+
+float stream_freq = 100000000 / 2048.0;
+
+float one_fft(int m, int sk, int restart){
+	int n = 1 << m;
+	int skip = 1 << sk;
+	int round = 1 << (sk-1);
+	stream_grabber_wait_enough_samples( 1 << (m+sk));
+	int sum = 0;
+	for(int i=0;i<n;i++){
+		sum = 0;
+		for(int j=0;j<skip;j++)
+			sum += (stream_grabber_read_sample((i<<sk) | j) + round) >> sk;
+		q[i] = sum;
+		w[i] = 0;
+	}
+	if(restart)
+		stream_grabber_start();
+	return fft(m, stream_freq / skip);
+}
+
+float auto_range(void){
+
+	float freq = one_fft(7, 0, 0);
+	if(freq > 10000)
+		return one_fft(9, 0, 1);
+	if(freq > 5000)
+		return one_fft(9, 1, 1);
+	freq = one_fft(7, 2, 0);
+	if(freq > 2500)
+		return one_fft(8, 2, 1);
+	if(freq > 1250)
+		return one_fft(7, 3, 1);
+	return one_fft(7, 4, 1);
 }

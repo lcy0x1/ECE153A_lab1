@@ -21,6 +21,7 @@ Returns
 
 #define root2 1.0594631 //twelfth root of 2
 
-void findNote(float f);
+
+int findNote(float f);
 
 #endif

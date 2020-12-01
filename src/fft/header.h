@@ -1,11 +1,18 @@
-#ifndef header_h
-#define header_h
+#ifndef HEADER_H
+#define HEADER_H
 
-#define M 7 //2^m=samples
-#define SAMPLES 128
-#define SKIPS 4 // AXI4 Streaming Data FIFO has size 512
-#define AMPLITUDE (3.3/67108864.0)
+#define SAMPLES 512
 #define SIN_AMP 15
 #define OFF 16384
+
+#define AMPLITUDE (3.3/67108864.0)
+
+void precompute();
+
+// waiting for input, called repeatedly by stream grabber wait
+// delay: estimated wait duration, in number of samples left to be captured
+void stream_wait(int delay);
+
+float auto_range(void);
 
 #endif

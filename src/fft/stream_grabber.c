@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include "xparameters.h"
+#include "header.h"
 #include "stream_grabber.h"
 
 static volatile uint32_t* const reg_start =
@@ -33,7 +34,8 @@ unsigned stream_grabber_samples_sampled_captures() {
 }
 
 void stream_grabber_wait_enough_samples(unsigned required_samples){
-	while((*reg_samples_captured)<required_samples) {}
+	while((*reg_samples_captured)<required_samples)
+		stream_wait(required_samples - *reg_samples_captured);
 }
 
 int stream_grabber_read_sample(unsigned which_sample)

@@ -50,39 +50,39 @@ u32 encoder_FSM_switch(u32 enc_flag);
 
 int setup(void) {
 	ASSERT(XIntc_Initialize(&sys_intc, ID_INTC))
-	//ASSERT(XIntc_Connect(&sys_intc, INTR_TIMER_0, timer_handler, &sys_tmrctr))
-	ASSERT(XIntc_Connect(&sys_intc, INTR_TIMER_1, timer_alt_handler, &sys_tmralt))
-	//ASSERT(XIntc_Connect(&sys_intc, INTR_ENC, encoder_handler, &sys_enc))
-	//ASSERT(XIntc_Connect(&sys_intc, INTR_BTN, button_handler, &sys_btn))
+	ASSERT(XIntc_Connect(&sys_intc, INTR_TIMER_0, timer_handler, &sys_tmrctr))
+	//ASSERT(XIntc_Connect(&sys_intc, INTR_TIMER_1, timer_alt_handler, &sys_tmralt))
+	ASSERT(XIntc_Connect(&sys_intc, INTR_ENC, encoder_handler, &sys_enc))
+	ASSERT(XIntc_Connect(&sys_intc, INTR_BTN, button_handler, &sys_btn))
 	ASSERT(XIntc_Start(&sys_intc, XIN_REAL_MODE))
-	//XIntc_Enable(&sys_intc, INTR_TIMER_0);
+	XIntc_Enable(&sys_intc, INTR_TIMER_0);
 	XIntc_Enable(&sys_intc, INTR_TIMER_1);
-	//XIntc_Enable(&sys_intc, INTR_BTN);
-	//XIntc_Enable(&sys_intc, INTR_ENC);
+	XIntc_Enable(&sys_intc, INTR_BTN);
+	XIntc_Enable(&sys_intc, INTR_ENC);
 	//ASSERT(XGpio_Initialize(&sys_led, ID_LED))
 	//ASSERT(XGpio_Initialize(&sys_rgb, ID_RGB))
-	//ASSERT(XGpio_Initialize(&sys_btn, ID_BTN))
-	//ASSERT(XGpio_Initialize(&sys_enc, ID_ENC))
-	//ASSERT(XTmrCtr_Initialize(&sys_tmrctr, ID_TMR_0))
+	ASSERT(XGpio_Initialize(&sys_btn, ID_BTN))
+	ASSERT(XGpio_Initialize(&sys_enc, ID_ENC))
+	ASSERT(XTmrCtr_Initialize(&sys_tmrctr, ID_TMR_0))
 	ASSERT(XTmrCtr_Initialize(&sys_tmralt, ID_TMR_1))
-	//XTmrCtr_SetOptions(&sys_tmrctr, ID_TMR_0, XTC_INT_MODE_OPTION | XTC_AUTO_RELOAD_OPTION);
-	XTmrCtr_SetOptions(&sys_tmralt, ID_TMR_1,XTC_INT_MODE_OPTION | XTC_AUTO_RELOAD_OPTION);
-	//XTmrCtr_SetResetValue(&sys_tmrctr, ID_TMR_0, 0xFFFFFFFF - RESET_VALUE);
-	XTmrCtr_SetResetValue(&sys_tmralt, ID_TMR_1, 0xFFFFFFFF - RESET_VALUE);
+	XTmrCtr_SetOptions(&sys_tmrctr, ID_TMR_0, XTC_INT_MODE_OPTION | XTC_AUTO_RELOAD_OPTION);
+	//XTmrCtr_SetOptions(&sys_tmralt, ID_TMR_1,XTC_INT_MODE_OPTION | XTC_AUTO_RELOAD_OPTION);
+	XTmrCtr_SetResetValue(&sys_tmrctr, ID_TMR_0, 0xFFFFFFFF - RESET_VALUE);
+	//XTmrCtr_SetResetValue(&sys_tmralt, ID_TMR_1, 0xFFFFFFFF - RESET_VALUE);
 	microblaze_register_handler(XIntc_DeviceInterruptHandler, ID_INTC);
 
-	//ASSERT(setup_lcd())
+	ASSERT(setup_lcd())
 
 	return XST_SUCCESS;
 }
 
 void enable_all(void){
-	//XTmrCtr_Start(&sys_tmrctr, ID_TMR_0);
-	XTmrCtr_Start(&sys_tmralt, ID_TMR_1);
-	//XGpio_InterruptEnable(&sys_btn, GPIO_MASK);
-	//XGpio_InterruptEnable(&sys_enc, GPIO_MASK);
-	//XGpio_InterruptGlobalEnable(&sys_btn);
-	//XGpio_InterruptGlobalEnable(&sys_enc);
+	XTmrCtr_Start(&sys_tmrctr, ID_TMR_0);
+	//XTmrCtr_Start(&sys_tmralt, ID_TMR_1);
+	XGpio_InterruptEnable(&sys_btn, GPIO_MASK);
+	XGpio_InterruptEnable(&sys_enc, GPIO_MASK);
+	XGpio_InterruptGlobalEnable(&sys_btn);
+	XGpio_InterruptGlobalEnable(&sys_enc);
 	microblaze_enable_interrupts();
 }
 
@@ -253,7 +253,6 @@ u32 encoder_FSM_switch(u32 enc_flag) {
 	}
 	return FSM_ERR_UNKNOWN;
 }
-
 
 u32 getGlobalTime(void) {
 	return time_global;

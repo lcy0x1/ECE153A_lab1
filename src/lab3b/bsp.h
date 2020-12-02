@@ -3,8 +3,10 @@
 
 #include "hardware.h"
 #include "display.h"
-#include "lab2b.h"
+#include "lab3b.h"
 
 void BSP_init(void);
+
+void set_FFT_enable(int enable);
 
 #endif

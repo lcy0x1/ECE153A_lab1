@@ -4,6 +4,10 @@
  *****************************************************************************/
 
 #include "bsp.h"
+#include "lab3b.h"
+#include "../fft/header.h"
+
+static int fft_enable = 0;
 
 void BSP_init(void) {
 	print("---Entering main---\n\r");
@@ -13,7 +17,14 @@ void BSP_init(void) {
 		for(;;);
 	} else
 		print("Initialization succeed\n\r");
+	precompute();
 	init_background();
+}
+
+void set_FFT_enable(int enable){
+	fft_enable = enable;
+	if(enable)
+		stream_grabber_start();
 }
 
 void QF_onStartup(void) { /* entered with interrupts locked */
@@ -22,18 +33,27 @@ void QF_onStartup(void) { /* entered with interrupts locked */
 
 void QF_onIdle(void) { /* entered with interrupts locked */
 	QF_INT_UNLOCK()
-
-	update_queue();
+	if(fft_enable) {
+		add_window(auto_range());
+		int note = find_note(lab3b.a4, get_mean());
+		if(lab3b.note != note){
+			lab3b.note = note;
+			post_command(UPDATE, TUNER);
+		}
+	}
+	execute_command(); // LCD update
 }
 
-/* Do not touch Q_onAssert */
-/*..........................................................................*/
+// 512 delay is 10ms
+void stream_wait(int delay){
+	if(delay > 500)
+		execute_command();
+}
+
 void Q_onAssert(char const Q_ROM * const Q_ROM_VAR file, int line) {
 	(void) file; /* avoid compiler warning */
 	(void) line; /* avoid compiler warning */
 	QF_INT_LOCK()
-	;
-
 	print("\n\r--- Assert Failed ---\n\r");
 	log_debug_info();
 	for (;;) {
@@ -47,23 +67,27 @@ void Q_onAssert(char const Q_ROM * const Q_ROM_VAR file, int line) {
  ******************************************************************************/
 
 void intr_timer(u32 time) {
-	dispatch_display(TICK, time);
+	//dispatch_display(TICK, time);
 }
 
 void intr_button(u32 flag) {
-	u32 btn = -1;
-	while (flag) {
-		flag >>= 1;
-		btn++;
-	}
-	dispatch_display(BUTTON_CLICK, btn);
+	if(flag & BTN_UP)
+		dispatch(I_UP);
+	if(flag & BTN_DOWN)
+		dispatch(I_DOWN);
+	if(flag & BTN_LEFT)
+		dispatch(P_OCTAVE);
+	if(flag & BTN_RIGHT)
+		dispatch(P_A4);
+	if(flag & BTN_CENTER)
+		dispatch(P_TUNER);
 }
 
 void intr_encoder(u32 flag) {
 	if (flag & ENC_CW)
-		dispatch_volume(ENCODER_CW);
+		dispatch(I_UP);
 	if (flag & ENC_CCW)
-		dispatch_volume(ENCODER_CCW);
+		dispatch(I_DOWN);
 	if (flag & ENC_PUSH)
-		dispatch_volume(ENCODER_CLICK);
+		dispatch(P_TUNER);
 }

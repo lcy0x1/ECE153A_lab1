@@ -36,8 +36,8 @@ float get_stdev(){
 	return sqrt(win_sqsum / win_size - mean * mean);
 }
 
-int find_note(float freq){
-	return (int)(log2(freq/440)*1200+5700.5);
+int find_note(int a4, float freq){
+	return (int)(log2(freq/a4)*1200+5700.5);
 }
 
 char* note_char(int note){

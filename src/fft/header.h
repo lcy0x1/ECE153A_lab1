@@ -16,11 +16,11 @@ void stream_wait(int delay);
 void precompute();
 
 float auto_range(void);
-int find_note(float freq);
 void add_window(float freq);
 float get_mean();
 float get_stdev();
 
+int find_note(int a4, float freq);
 char* note_char(int note);
 
 void stream_grabber_start();

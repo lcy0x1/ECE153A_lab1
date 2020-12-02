@@ -31,59 +31,28 @@
  *   ps7_uart    115200 (configured by bootrom/bsp)
  */
 
-#include <stdio.h>
-#include <mb_interface.h>
-#include <xil_types.h>
-#include <xil_assert.h>
-#include <xio.h>
-#include "xtmrctr.h"
 #include "xil_cache.h"
-#include "xparameters.h"
+#include "lab3b/lab3b.h"
+#include "lab3b/bsp.h"
 
-#include "hardware.h"
-#include "fft/header.h"
+#define QUEUE_SIZE 30
+
+static QEvent queue[QUEUE_SIZE];
+
+QActiveCB const Q_ROM Q_ROM_VAR QF_active[] = {
+		{ (QActive *) 0, (QEvent *) 0, 0 },
+		{ (QActive *) &lab3b, queue, QUEUE_SIZE }
+};
+
+Q_ASSERT_COMPILE(QF_MAX_ACTIVE == Q_DIM(QF_active) - 1);
 
 int main() {
-
 	Xil_ICacheInvalidate()
 	Xil_ICacheEnable();
 	Xil_DCacheInvalidate()
 	Xil_DCacheEnable();
-
-	print("Hello World\n\r");
-
-	precompute(); // precompute the sine and cosine table
-	stream_grabber_start();
-
-
-	int note;
-	int octave;
-	int cent;
-	float freq;
-	float stdev;
-	int stable;
-	while (1) {
-		add_window(auto_range());
-		freq = get_mean();
-		stdev = get_stdev();
-		// stdev < 5 cent means 95% CI for 10 cent
-		stable = stdev < 0.00289647 * freq;
-
-		note = find_note(freq);
-		cent = note % 100;
-		octave = note / 1200;
-		note = note / 100 % 12;
-
-
-		xil_printf("%5d, %1d, %2d, %2d, %3d \n\r", (int)(freq+0.5), stable, octave, note, cent);
-	}
-
+	Lab3B_ctor();
+	BSP_init();
+	QF_run();
 	return 0;
 }
-
-// 512 delay is 10ms
-void stream_wait(int delay){
-
-}
-
-

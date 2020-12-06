@@ -1,4 +1,6 @@
 #include "display.h"
+#include "lab3b.h"
+#include "../fft/header.h"
 
 #define MAX(A,B) A>B?A:B
 #define MIN(A,B) A<B?A:B
@@ -70,7 +72,7 @@ void init_background(void) {
 //--------------------------------------
 
 void draw_octave(void){
-
+	u32 octave = lab3b.octave;
 }
 
 void update_octave(void){
@@ -91,7 +93,10 @@ void draw_tuner(void){
 }
 
 void update_tuner(void){
-
+	u32 note = lab3b.note;
+	u32 cent = note % 100;
+	u32 octave = note / 1200;
+	char* str = note_char(note / 100 % 12);
 }
 
 void erase_tuner(void){
@@ -104,11 +109,11 @@ void erase_tuner(void){
 //--------------------------------------
 
 void draw_a4(void){
-
+	u32 freq = lab3b.a4;
+	//TODO
 }
 
 void update_a4(void){
-
 }
 
 void erase_a4(void){

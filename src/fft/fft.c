@@ -128,16 +128,18 @@ float one_fft(int m, int sk, int restart){
 	return fft(m, stream_freq / skip);
 }
 
-float auto_range(void){
-	float freq = one_fft(7, 0, 0);
-	if(freq > CUTOFF << 3)
-		return one_fft(9, 0, 1);
-	if(freq > CUTOFF << 2)
+float auto_range(int octave){
+	if(octave <= 6)
+		return one_fft(8, 3, 1);
+	if(octave <= 8)
 		return one_fft(9, 1, 1);
-	freq = one_fft(7, 2, 0);
-	if(freq > CUTOFF << 1)
-		return one_fft(8, 2, 1);
+	if(octave == 9)
+		return one_fft(9, 0, 1);
+
+	float freq = one_fft(7, 0, 0);
+	if(freq > CUTOFF * 4)
+		return one_fft(9, 0, 1);
 	if(freq > CUTOFF)
-		return one_fft(7, 3, 1);
-	return one_fft(7, 4, 1);
+		return one_fft(9, 1, 1);
+	return one_fft(8, 3, 1);
 }

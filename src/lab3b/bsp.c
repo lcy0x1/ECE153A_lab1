@@ -34,7 +34,7 @@ void QF_onStartup(void) { /* entered with interrupts locked */
 void QF_onIdle(void) { /* entered with interrupts locked */
 	QF_INT_UNLOCK()
 	if(fft_enable) {
-		add_window(auto_range());
+		add_window(auto_range(lab3b.octave));
 		int note = find_note(lab3b.a4, get_mean());
 		if(lab3b.note != note){
 			lab3b.note = note;
@@ -44,9 +44,9 @@ void QF_onIdle(void) { /* entered with interrupts locked */
 	execute_command(); // LCD update
 }
 
-// 512 delay is 10ms
+// delay is number of cycles, update LCD for 1024 sampling or more
 void stream_wait(int delay){
-	if(delay > 500)
+	if(delay > 600)
 		execute_command();
 }
 

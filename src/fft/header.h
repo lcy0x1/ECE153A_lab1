@@ -3,7 +3,7 @@
 
 #define WINDOW_SIZE 32
 
-#define CUTOFF 1250
+#define CUTOFF 2500
 #define SAMPLES 512
 #define SIN_AMP 15
 #define SQ_AMP 17
@@ -15,7 +15,7 @@
 void stream_wait(int delay);
 void precompute();
 
-float auto_range(void);
+float auto_range(int octave);
 void add_window(float freq);
 float get_mean();
 float get_stdev();

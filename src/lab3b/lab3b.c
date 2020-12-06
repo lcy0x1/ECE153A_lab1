@@ -53,15 +53,15 @@ QState Q_octave(LAB3B *me) {
 	}
 	case I_UP: {
 		me->octave++;
-		if(me->octave > 10)
+		if(me->octave > 9)
 			me->octave = 0;
 		post_command(UPDATE, OCTAVE);
 		return Q_HANDLED();
 	}
 	case I_DOWN: {
 		me->octave--;
-		if(me->octave < 0)
-			me->octave = 10;
+		if(me->octave > 10)
+			me->octave = 9;
 		post_command(UPDATE, OCTAVE);
 		return Q_HANDLED();
 	}
@@ -103,7 +103,7 @@ QState Q_a4(LAB3B *me) {
 		return Q_HANDLED();
 	}
 	case I_DOWN: {
-		if (me->a4 > 440) {
+		if (me->a4 > 420) {
 			me->a4--;
 			post_command(UPDATE, A4);
 		}
@@ -126,5 +126,6 @@ void log_debug_info(void){
 		printf("event %d: %s\n\r",i,strs[ev.sig]);
 	}
 }
+
 
 

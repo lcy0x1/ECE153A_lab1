@@ -2,10 +2,6 @@
 #include "lab3b.h"
 #include "../fft/header.h"
 
-#define MAX(A,B) A>B?A:B
-#define MIN(A,B) A<B?A:B
-#define RECT(X,Y,W,H) if(W>0&&H>0)fillRect(MAX(0,X), MAX(0,Y), MIN(239,X+W-1), MIN(319,Y+H-1));
-
 static u32 pending_cmd = 0;
 
 void post_command(enum ACTION act, enum PAGE p){
@@ -61,16 +57,30 @@ void execute_command(void){
 // screen initialization
 //--------------------------------------
 
+#define MAX(A,B) A>B?A:B
+#define MIN(A,B) A<B?A:B
+#define RECT(X,Y,W,H) if(W>0&&H>0)fillRect(MAX(0,X), MAX(0,Y), MIN(239,X+W-1), MIN(319,Y+H-1));
+
+#define COL_BG 0215, 0306, 0163
+#define COL_TXT 0377, 0377, 0377
+#define COL_TUNER 0115, 0206, 0145
+
+#define RECTBG(R,G,B,X,Y,W,H) setColor(R,G,B); RECT(X, Y, W, H) setColor(COL_TXT); setColorBg(R,G,B);
+
+#define RECT_OCT(COL) RECTBG(COL, 80, 110, 80, 80)
+#define RECT_TUNER(COL) RECTBG(COL, 80, 110, 80, 80)
+#define RECT_A4(COL) RECTBG(COL, 80, 110, 80, 30)
 
 void init_background(void) {
 	initLCD();
-	drawBG(0x215,0x306,0x163,0,0,239,329);
-	setColorBg(0x215,0x306,0x163);
+	setColor(COL_BG);
+	RECT(0, 0, 240, 320)
+	setColorBg(COL_BG);
+	setColor(COL_TXT);
 	setFont(BigFont);
-	lcdPrint("Projekt Tuner",10,10);
+	lcdPrint("Project Tuner", 10, 10);
 	setFont(SmallFont);
-	lcdPrint(" Arthur Wang & Tianrui Hu",10,40);
-	// TODO
+	lcdPrint(" Arthur Wang & Tianrui Hu", 10, 40);
 }
 
 //--------------------------------------
@@ -78,22 +88,23 @@ void init_background(void) {
 //--------------------------------------
 
 void draw_octave(void){
-	drawBG(0x215,0x306,0x163,0,110,70,220);
-	lcdPrint("Current",1,110);
-	lcdPrint("octave",1,120);
+	RECT_OCT(COL_BG)
+
+	lcdPrint("Current", 120-28, 120);
+	lcdPrint("octave", 120-24, 130);
+
 	update_octave();
 }
 
 void update_octave(void){
-	u32 octave = lab3b.octave;
-	u8 a = (u8)octave+0x30;
-	//xil_printf("%d",a);
-	//setFont(BigFont);
-	printChar(a,30,150); //print
+	u32 a = lab3b.octave;
+	setFont(BigFont);
+	printChar(a < 10 ? a + 0x30 : 'A', 120-4, 150);
+	setFont(SmallFont);
 }
 
 void erase_octave(void){
-	drawBG(0x215,0x306,0x163,0,110,70,220);
+	RECT_OCT(COL_BG)
 }
 
 
@@ -102,29 +113,29 @@ void erase_octave(void){
 //--------------------------------------
 
 void draw_tuner(void){
-	drawBG(0x115,0x206,0x145,80,110,160,220);
-	setColorBg(0x115,0x206,0x145);
+	RECT_TUNER(COL_TUNER)
+
 	update_tuner();
 }
 
 void update_tuner(void){
-	drawBG(0x115,0x206,0x145,100,130,160,160);
-	u32 note = lab3b.note;
-	u32 cent = note % 100;
+	u32 note = lab3b.note + 50;
+	int cent = note % 100 - 50;
 	u32 octave = note / 1200;
 	char* str = note_char(note / 100 % 12);
 	setFont(BigFont);
-	lcdPrint(str,95,130);
-	u8 a = (u8)octave+0x30;
-	printChar(a,125,130);
+	lcdPrint(str,120-8-16,130);
+	printChar(octave+0x30,120+8,130);
 	setFont(SmallFont);
-
-
+	printChar(cent < 0 ? '-' : ' ',120-4-8, 150);
+	cent = cent < 0 ? -cent : cent;
+	u8 cten = cent / 10;
+	printChar(cten == 0 ? ' ' : cten + 0x30, 120-4, 150);
+	printChar(cent % 10 + 0x30, 120+4, 150);
 }
 
 void erase_tuner(void){
-	drawBG(0x215,0x306,0x163,80,110,160,220);
-	setColorBg(0x215,0x306,0x163);
+	RECT_TUNER(COL_BG)
 }
 
 
@@ -133,28 +144,21 @@ void erase_tuner(void){
 //--------------------------------------
 
 void draw_a4(void){
-	drawBG(0x215,0x306,0x163,70,250,180,290);
-	lcdPrint("Current A4",70,255);
-	lcdPrint("Hz",130,270);
+	RECT_A4(COL_BG)
+
+	lcdPrint("Current A4",120-40,120);
+	lcdPrint("Hz",120+8,140);
+
 	update_a4();
-	//TODO
 }
 
 void update_a4(void){
 	u32 freq = lab3b.a4;
-	printChar(0x34,90,270); //4
-	u8 a = (((int)freq-400)/10)+0x30;
-	u8 b = (((int)freq-400)%10)+0x30;
-	printChar(a,100,270); //tenth
-	printChar(b,110,270); //decimal
+	printChar(0x34,120-24,140); //4
+	printChar((freq-400)/10+0x30,120-16,140); //tenth
+	printChar((freq-400)%10+0x30,120-8,140); //decimal
 }
 
 void erase_a4(void){
-	drawBG(0x215,0x306,0x163,70,250,180,290);
-}
-
-void drawBG(u8 r, u8 g, u8 b,int x,int y, int x2, int y2){ //Draw Background with Blue
-	setColor(r,g,b);
-	fillRect(x,y,x2,y2);
-	setColor(0x377,0x377,0x377);
+	RECT_A4(COL_BG)
 }

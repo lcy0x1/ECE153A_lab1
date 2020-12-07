@@ -1,7 +1,7 @@
 #include "header.h"
 #include <math.h>
 
-static char notes[12][3]={"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"};
+static char notes[12][3]={"C ","C#","D ","D#","E ","F ","F#","G ","G#","A ","A#","B "};
 
 static float window[WINDOW_SIZE];
 static int win_size = 0, win_end = -1;

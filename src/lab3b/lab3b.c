@@ -53,7 +53,7 @@ QState Q_octave(LAB3B *me) {
 	}
 	case I_UP: {
 		me->octave++;
-		if(me->octave > 9)
+		if(me->octave > 10)
 			me->octave = 0;
 		post_command(UPDATE, OCTAVE);
 		return Q_HANDLED();
@@ -61,7 +61,7 @@ QState Q_octave(LAB3B *me) {
 	case I_DOWN: {
 		me->octave--;
 		if(me->octave > 10)
-			me->octave = 9;
+			me->octave = 10;
 		post_command(UPDATE, OCTAVE);
 		return Q_HANDLED();
 	}

@@ -48,15 +48,11 @@
 #include <stdio.h>
 #include "platform.h"
 #include "xil_printf.h"
-#include "xil_cache.h"
 
 
 int main()
 {
-	Xil_ICacheInvalidate();
-	Xil_ICacheEnable();
-	Xil_DCacheInvalidate();
-	Xil_DCacheEnable();
+    init_platform();
 
     print("Hello World\n\r");
 

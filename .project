@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>lab1</name>
-	<comment>Created by SDK v2019.1. lab1_bsp - microblaze_0</comment>
+	<name>lab3b</name>
+	<comment>Created by SDK v2019.1. lab3b_bsp - microblaze_0</comment>
 	<projects>
-		<project>lab1_bsp</project>
+		<project>lab3b_bsp</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

@@ -1,22 +1,36 @@
 #include "trig.h"
 #include "header.h"
 
-static int cos[SAMPLES];
-static int sin[SAMPLES];
+#if USE_FLOAT
+#define CAST_SIN(v) v
+#define CAST_MUL(v) v
+#define CAST_AMP(v) v
+typedef float fft_t;
+#else
+#define OFF_SIN (1<<(SIN_AMP-1))
+#define OFF_SQ (1<<(SQ_AMP-1))
+#define CAST_SIN(v) (int)(v * (1 << SIN_AMP) + 0.5)
+#define CAST_MUL(v) (v + OFF_SIN) >> SIN_AMP
+#define CAST_AMP(v) (v + OFF_SQ) >> SQ_AMP
+typedef int fft_t;
+#endif
+
+
+static fft_t cos[SAMPLES];
+static fft_t sin[SAMPLES];
 
 void precompute(){
 	int n = SAMPLES;
-	int amp = 1 << SIN_AMP;
 	for(int i=0;i<n;i++){
-		cos[i] = (int)(cosine(-PI*i/n) * amp + 0.5);
-		sin[i] = (int)(sine(-PI*i/n) * amp + 0.5);
+		cos[i] = CAST_SIN(cosine(-PI*i/n));
+		sin[i] = CAST_SIN(sine(-PI*i/n));
 	}
 }
 
-static int new_[SAMPLES];
-static int new_im[SAMPLES];
-static int q[SAMPLES];
-static int w[SAMPLES];
+static fft_t new_[SAMPLES];
+static fft_t new_im[SAMPLES];
+static fft_t q[SAMPLES];
+static fft_t w[SAMPLES];
 
 float fft(int m, float sample_f) {
 	int n = 1 << m;
@@ -47,15 +61,16 @@ float fft(int m, float sample_f) {
 	}
 	//end ordering algorithm
 
-	int re,im,dq,dw,angle;
+	fft_t re,im,dq,dw;
+	int angle;
 
 	for (j=0; j<m; j++){	
 	//MATH
 		a = ~((n>>j)-1);
 		for(i=0; i<n; i+=2){
 			angle = (i&a) << (9-m);
-			dq = (q[i+1]+OFF_SIN) >> SIN_AMP;
-			dw = (w[i+1]+OFF_SIN) >> SIN_AMP;
+			dq = CAST_MUL(q[i+1]);
+			dw = CAST_MUL(w[i+1]);
 			re = dq * cos[angle] - dw * sin[angle];
 			im = dq * sin[angle] + dw * cos[angle];
 
@@ -85,12 +100,12 @@ float fft(int m, float sample_f) {
 	//END REORDER
 	}
 
-	int place,max, fq, fw;
-	max=0;
+	int place;
+	fft_t fq, fw, max=0;
 	place=1;
 	for(i=1; i<(n/2); i++) {
-		fq = (q[i] + OFF_SQ) >> SQ_AMP;
-		fw = (w[i] + OFF_SQ) >> SQ_AMP;
+		fq = CAST_AMP(q[i]);
+		fw = CAST_AMP(w[i]);
 		new_[i] = fq * fq + fw * fw;
 		if(max < new_[i]) {
 			max = new_[i];
@@ -98,7 +113,7 @@ float fft(int m, float sample_f) {
 		}
 	}
 	float s=sample_f/n;
-	int y1=new_[place-1],y2=new_[place],y3=new_[place+1];
+	fft_t y1=new_[place-1],y2=new_[place],y3=new_[place+1];
 	float x0=s+(2*s*(y2-y1))/(2*y2-y1-y3);
 	x0=x0/s-1;
 	

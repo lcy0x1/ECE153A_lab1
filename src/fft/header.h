@@ -10,6 +10,8 @@
 #define OFF_SIN (1<<(SIN_AMP-1))
 #define OFF_SQ (1<<(SQ_AMP-1))
 
+#define USE_FLOAT 1
+
 // waiting for input, called repeatedly by stream grabber wait
 // delay: estimated wait duration, in number of samples left to be captured
 void stream_wait(int delay);

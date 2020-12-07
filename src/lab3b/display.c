@@ -64,11 +64,12 @@ void execute_command(void){
 
 void init_background(void) {
 	initLCD();
-	fillRect(0,0,239,329);
+	drawBG(0x215,0x306,0x163,0,0,239,329);
+	setColorBg(0x215,0x306,0x163);
 	setFont(BigFont);
-	printChar(0x43,100,130); //C
+	lcdPrint("Projekt Tuner",10,10);
 	setFont(SmallFont);
-	printChar(0x03,120,130); //#
+	lcdPrint(" Arthur Wang & Tianrui Hu",10,40);
 	// TODO
 }
 
@@ -77,25 +78,22 @@ void init_background(void) {
 //--------------------------------------
 
 void draw_octave(void){
-	fillRect(0,110,70,220);
+	drawBG(0x215,0x306,0x163,0,110,70,220);
 	lcdPrint("Current",1,110);
 	lcdPrint("octave",1,120);
-	u32 octave = lab3b.octave;
-	u8 a = (u8)octave+0x30;
-	//setFont(BigFont);
-	printChar(a,30,150); //print basic:4
+	update_octave();
 }
 
 void update_octave(void){
 	u32 octave = lab3b.octave;
 	u8 a = (u8)octave+0x30;
-	xil_printf("%d",a);
+	//xil_printf("%d",a);
 	//setFont(BigFont);
 	printChar(a,30,150); //print
 }
 
 void erase_octave(void){
-	fillRect(0,110,70,220);
+	drawBG(0x215,0x306,0x163,0,110,70,220);
 }
 
 
@@ -104,62 +102,29 @@ void erase_octave(void){
 //--------------------------------------
 
 void draw_tuner(void){
-	fillRect(80,110,160,220);
+	drawBG(0x115,0x206,0x145,80,110,160,220);
+	setColorBg(0x115,0x206,0x145);
+	update_tuner();
 }
 
 void update_tuner(void){
-
+	drawBG(0x115,0x206,0x145,100,130,160,160);
 	u32 note = lab3b.note;
 	u32 cent = note % 100;
 	u32 octave = note / 1200;
 	char* str = note_char(note / 100 % 12);
-	switch(note){
-			case 0:{
-				printChar(0x43,100,130); //C
-				}
-			case 1:{
-				printChar(0x43,100,130); //C
-				printChar(0x03,110,130); //#
-				}
-			case 2:{
-				printChar(0x44,100,130); //D
-				}
-			case 3:{
-				printChar(0x44,100,130); //D
-				printChar(0x03,110,130); //#
-				}
-			case 4:{
-				printChar(0x45,100,130); //E
-				}
-			case 5:{
-				printChar(0x46,100,130); //F
-				}
-			case 6:{
-				printChar(0x46,100,130); //F
-				printChar(0x03,110,130); //#
-				}
-			case 7:{
-				printChar(0x47,100,130); //G
-			}
-			case 8:{
-				printChar(0x47,100,130); //G
-				printChar(0x03,110,130); //#
-				}
-			case 9:{
-				printChar(0x41,100,130); //A
-				}
-			case 10:{
-				printChar(0x41,100,130); //A
-				printChar(0x03,110,130); //#
-				}
-			case 11:{
-				printChar(0x42,100,130); //B
-			}
-		}
+	setFont(BigFont);
+	lcdPrint(str,95,130);
+	u8 a = (u8)octave+0x30;
+	printChar(a,125,130);
+	setFont(SmallFont);
+
+
 }
 
 void erase_tuner(void){
-
+	drawBG(0x215,0x306,0x163,80,110,160,220);
+	setColorBg(0x215,0x306,0x163);
 }
 
 
@@ -168,15 +133,10 @@ void erase_tuner(void){
 //--------------------------------------
 
 void draw_a4(void){
-	fillRect(70,250,180,290);
+	drawBG(0x215,0x306,0x163,70,250,180,290);
 	lcdPrint("Current A4",70,255);
 	lcdPrint("Hz",130,270);
-	u32 freq = lab3b.a4;
-	printChar(0x34,90,270); //4
-	u8 a = (((int)freq-400)/10)+0x30;
-	u8 b = (((int)freq-400)%10)+0x30;
-	printChar(a,100,270); //tenth
-	printChar(b,110,270); //decimal
+	update_a4();
 	//TODO
 }
 
@@ -190,6 +150,11 @@ void update_a4(void){
 }
 
 void erase_a4(void){
-	fillRect(70,250,180,290);
+	drawBG(0x215,0x306,0x163,70,250,180,290);
 }
 
+void drawBG(u8 r, u8 g, u8 b,int x,int y, int x2, int y2){ //Draw Background with Blue
+	setColor(r,g,b);
+	fillRect(x,y,x2,y2);
+	setColor(0x377,0x377,0x377);
+}

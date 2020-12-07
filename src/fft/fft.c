@@ -126,11 +126,11 @@ float fft(int m, float sample_f) {
 
 float stream_freq = 100000000 / 2048.0;
 
-static unsigned slow[SLOW_SAMPLES];
+static unsigned int slow[SLOW_SAMPLES];
 static volatile int slow_index = 0;
 static volatile int slow_count = 0;
 
-void log_slow_mic_value(unsigned value){
+void log_slow_mic_value(unsigned int value){
 	slow[slow_index] = value;
 	slow_index = (slow_index + 1) & (SLOW_SAMPLES - 1);
 	if(slow_count < SLOW_SAMPLES)

@@ -65,9 +65,9 @@ int setup(void) {
 	//ASSERT(XGpio_Initialize(&sys_rgb, ID_RGB))
 	ASSERT(XGpio_Initialize(&sys_btn, ID_BTN))
 	ASSERT(XGpio_Initialize(&sys_enc, ID_ENC))
-	ASSERT(XGpio_Initialize(&sys_btn, ID_MIC))
+	ASSERT(XGpio_Initialize(&sys_mic, ID_MIC))
 	ASSERT(XTmrCtr_Initialize(&sys_tmrctr, ID_TMR_0))
-	ASSERT(XTmrCtr_Initialize(&sys_tmralt, ID_TMR_1))
+	//ASSERT(XTmrCtr_Initialize(&sys_tmralt, ID_TMR_1))
 	XTmrCtr_SetOptions(&sys_tmrctr, ID_TMR_0, XTC_INT_MODE_OPTION | XTC_AUTO_RELOAD_OPTION);
 	//XTmrCtr_SetOptions(&sys_tmralt, ID_TMR_1,XTC_INT_MODE_OPTION | XTC_AUTO_RELOAD_OPTION);
 	XTmrCtr_SetResetValue(&sys_tmrctr, ID_TMR_0, 0xFFFFFFFF - RESET_VALUE);

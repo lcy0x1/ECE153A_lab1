@@ -8,7 +8,7 @@
 #include "xspi.h"
 #include <xbasic_types.h>
 
-#define RESET_VALUE 100000 // the timer operates at 1kHz
+#define RESET_VALUE 65536 // the timer operates at 1.5kHz
 #define DEBOUNCE_TIME 100 // the debounce time is 0.1s
 
 #define BTN_UP 1
@@ -29,5 +29,6 @@ void intr_encoder(u32 flag);
 int setup(void);
 void enable_all(void);
 u32 getGlobalTime(void);
+u32 getMicValue(void);
 
 #endif

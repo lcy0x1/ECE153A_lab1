@@ -13,6 +13,7 @@
 #define ID_BTN XPAR_AXI_GPIO_BTN_DEVICE_ID
 #define ID_LED XPAR_AXI_GPIO_LED_DEVICE_ID
 #define ID_RGB XPAR_AXI_GPIO_RGBLEDS_DEVICE_ID
+#define ID_MIC XPAR_AXI_GPIO_MIC_DEVICE_ID
 #define GPIO_MASK XGPIO_IR_CH1_MASK
 
 #define FSM_STATE_BITS 7
@@ -32,6 +33,7 @@ XGpio sys_btn;
 XGpio sys_enc;
 XGpio sys_led;
 XGpio sys_rgb;
+XGpio sys_mic;
 XTmrCtr sys_tmrctr;
 XTmrCtr sys_tmralt;
 
@@ -63,6 +65,7 @@ int setup(void) {
 	//ASSERT(XGpio_Initialize(&sys_rgb, ID_RGB))
 	ASSERT(XGpio_Initialize(&sys_btn, ID_BTN))
 	ASSERT(XGpio_Initialize(&sys_enc, ID_ENC))
+	ASSERT(XGpio_Initialize(&sys_btn, ID_MIC))
 	ASSERT(XTmrCtr_Initialize(&sys_tmrctr, ID_TMR_0))
 	ASSERT(XTmrCtr_Initialize(&sys_tmralt, ID_TMR_1))
 	XTmrCtr_SetOptions(&sys_tmrctr, ID_TMR_0, XTC_INT_MODE_OPTION | XTC_AUTO_RELOAD_OPTION);
@@ -256,4 +259,9 @@ u32 encoder_FSM_switch(u32 enc_flag) {
 
 u32 getGlobalTime(void) {
 	return time_global;
+}
+
+
+u32 getMicValue(void){
+	return XGpio_DiscreteRead(&sys_mic, GPIO_MASK);
 }

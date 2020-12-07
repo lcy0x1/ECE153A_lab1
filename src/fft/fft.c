@@ -1,5 +1,6 @@
 #include "trig.h"
 #include "header.h"
+#include "xintc.h"
 
 #if USE_FLOAT
 #define CAST_SIN(v) v
@@ -125,6 +126,31 @@ float fft(int m, float sample_f) {
 
 float stream_freq = 100000000 / 2048.0;
 
+static unsigned slow[SLOW_SAMPLES];
+static volatile int slow_index = 0;
+static volatile int slow_count = 0;
+
+void log_slow_mic_value(unsigned value){
+	slow[slow_index] = value;
+	slow_index = (slow_index + 1) & (SLOW_SAMPLES - 1);
+	if(slow_count < SLOW_SAMPLES)
+		slow_count ++;
+}
+
+float slow_fft(int m){
+	int n = 1 << m;
+	if(slow_count < n)
+		return 0;
+	microblaze_disable_interrupts();
+	for(int i=0;i<n;i++){
+		q[i] = slow[(slow_index + i) & (SLOW_SAMPLES - 1)];
+		w[i] = 0;
+	}
+	microblaze_enable_interrupts();
+	return fft(m, stream_freq / 32);
+
+}
+
 float one_fft(int m, int sk, int restart){
 	int n = 1 << m;
 	int skip = 1 << sk;
@@ -144,6 +170,8 @@ float one_fft(int m, int sk, int restart){
 }
 
 float auto_range(int octave){
+	if(octave <= 4)
+		return slow_fft(9);
 	if(octave <= 6)
 		return one_fft(8, 3, 1);
 	if(octave <= 8)

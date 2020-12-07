@@ -5,6 +5,7 @@
 
 #define CUTOFF 2500
 #define SAMPLES 512
+#define SLOW_SAMPLES 512
 #define SIN_AMP 15
 #define SQ_AMP 16
 
@@ -27,5 +28,6 @@ void stream_grabber_start();
 unsigned stream_grabber_samples_sampled_captures();
 void stream_grabber_wait_enough_samples(unsigned required_samples);
 int stream_grabber_read_sample(unsigned which_sample);
+void log_slow_mic_value(unsigned value);
 
 #endif

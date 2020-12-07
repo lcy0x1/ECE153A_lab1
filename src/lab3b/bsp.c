@@ -67,7 +67,7 @@ void Q_onAssert(char const Q_ROM * const Q_ROM_VAR file, int line) {
  ******************************************************************************/
 
 void intr_timer(u32 time) {
-	//dispatch_display(TICK, time);
+	log_slow_mic_value(getMicValue());
 }
 
 void intr_button(u32 flag) {

@@ -7,8 +7,6 @@
 #define SAMPLES 512
 #define SIN_AMP 15
 #define SQ_AMP 16
-#define OFF_SIN (1<<(SIN_AMP-1))
-#define OFF_SQ (1<<(SQ_AMP-1))
 
 #define USE_FLOAT 1
 

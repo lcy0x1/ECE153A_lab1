@@ -69,7 +69,10 @@ void execute_command(void){
 
 #define RECT_OCT(COL) RECTBG(COL, 80, 110, 80, 80)
 #define RECT_TUNER(COL) RECTBG(COL, 80, 110, 80, 80)
-#define RECT_A4(COL) RECTBG(COL, 80, 110, 80, 30)
+#define RECT_A4(COL) RECTBG(COL, 70, 110, 100, 60)
+
+#define PRINT_C(C,R,Y) printChar(C,120+cfont.x_size*R/2,Y);
+#define PRINT_S(S,R,Y) lcdPrint(S,120+cfont.x_size*R/2,Y);
 
 void init_background(void) {
 	initLCD();
@@ -88,10 +91,10 @@ void init_background(void) {
 //--------------------------------------
 
 void draw_octave(void){
-	RECT_OCT(COL_BG)
+	RECT_OCT(COL_TUNER)
 
-	lcdPrint("Current", 120-28, 120);
-	lcdPrint("octave", 120-24, 130);
+	PRINT_S("Current", -7, 120);
+	PRINT_S("octave", -6, 130);
 
 	update_octave();
 }
@@ -99,7 +102,13 @@ void draw_octave(void){
 void update_octave(void){
 	u32 a = lab3b.octave;
 	setFont(BigFont);
-	printChar(a < 10 ? a + 0x30 : 'A', 120-4, 150);
+	if(a<10){
+		PRINT_S("    ",-4,150);
+		PRINT_C(a + 0x30, -1, 150);
+	}
+	else {
+		PRINT_S("Auto",-4,150);
+	}
 	setFont(SmallFont);
 }
 
@@ -124,14 +133,14 @@ void update_tuner(void){
 	u32 octave = note / 1200;
 	char* str = note_char(note / 100 % 12);
 	setFont(BigFont);
-	lcdPrint(str,120-8-16,130);
-	printChar(octave+0x30,120+8,130);
+	PRINT_S(str, -3, 130);
+	PRINT_C(octave+0x30, 1, 130);
 	setFont(SmallFont);
-	printChar(cent < 0 ? '-' : ' ',120-4-8, 150);
+	PRINT_C(cent < 0 ? '-' : ' ',-3, 150);
 	cent = cent < 0 ? -cent : cent;
 	u8 cten = cent / 10;
-	printChar(cten == 0 ? ' ' : cten + 0x30, 120-4, 150);
-	printChar(cent % 10 + 0x30, 120+4, 150);
+	PRINT_C(cten == 0 ? ' ' : cten + 0x30, -1, 150);
+	PRINT_C(cent % 10 + 0x30, 1, 150);
 }
 
 void erase_tuner(void){
@@ -144,21 +153,23 @@ void erase_tuner(void){
 //--------------------------------------
 
 void draw_a4(void){
-	RECT_A4(COL_BG)
+	RECT_A4(COL_TUNER)
 
-	lcdPrint("Current A4",120-40,120);
-	lcdPrint("Hz",120+8,140);
+	PRINT_S("Current A4", -10, 120);
+	setFont(BigFont);
+	PRINT_S("Hz", 1, 140);
 
 	update_a4();
 }
 
 void update_a4(void){
 	u32 freq = lab3b.a4;
-	printChar(0x34,120-24,140); //4
-	printChar((freq-400)/10+0x30,120-16,140); //tenth
-	printChar((freq-400)%10+0x30,120-8,140); //decimal
+	PRINT_C(0x34, -5, 140); //4
+	PRINT_C((freq-400)/10+0x30, -3, 140); //tenth
+	PRINT_C((freq-400)%10+0x30, -1, 140); //decimal
 }
 
 void erase_a4(void){
 	RECT_A4(COL_BG)
+	setFont(SmallFont);
 }

@@ -41,12 +41,12 @@ static volatile u32 time_global = 0;
 static enum ENC_STATE enc_state = INIT;
 
 int setup_lcd(void);
-void timer_handler();
-void timer_alt_handler();
-void button_handler();
-void encoder_handler();
-u32 encoder_FSM(u32 enc_flag);
-u32 encoder_FSM_switch(u32 enc_flag);
+void timer_handler(); // primary timer interrupt handler, calls intr_timer
+void timer_alt_handler(); // secondary timer interrupt handler, not used
+void button_handler(); // button interrupt handler, calls intr_button
+void encoder_handler(); // encoder interrupt handler, calls intr_encoder
+u32 encoder_FSM(u32 enc_flag); // FSM function for encoder state
+u32 encoder_FSM_switch(u32 enc_flag); // FSM function for encoder state
 
 // ---------- setup functions ----------
 
@@ -61,7 +61,7 @@ int setup(void) {
 	XIntc_Enable(&sys_intc, INTR_TIMER_1);
 	XIntc_Enable(&sys_intc, INTR_BTN);
 	XIntc_Enable(&sys_intc, INTR_ENC);
-	//ASSERT(XGpio_Initialize(&sys_led, ID_LED))
+	ASSERT(XGpio_Initialize(&sys_led, ID_LED))
 	//ASSERT(XGpio_Initialize(&sys_rgb, ID_RGB))
 	ASSERT(XGpio_Initialize(&sys_btn, ID_BTN))
 	ASSERT(XGpio_Initialize(&sys_enc, ID_ENC))
@@ -69,7 +69,7 @@ int setup(void) {
 	ASSERT(XTmrCtr_Initialize(&sys_tmrctr, ID_TMR_0))
 	//ASSERT(XTmrCtr_Initialize(&sys_tmralt, ID_TMR_1))
 	XTmrCtr_SetOptions(&sys_tmrctr, ID_TMR_0, XTC_INT_MODE_OPTION | XTC_AUTO_RELOAD_OPTION);
-	//XTmrCtr_SetOptions(&sys_tmralt, ID_TMR_1,XTC_INT_MODE_OPTION | XTC_AUTO_RELOAD_OPTION);
+	//XTmrCtr_SetOptions(&sys_tmralt, ID_TMR_1, XTC_INT_MODE_OPTION | XTC_AUTO_RELOAD_OPTION);
 	XTmrCtr_SetResetValue(&sys_tmrctr, ID_TMR_0, 0xFFFFFFFF - RESET_VALUE);
 	//XTmrCtr_SetResetValue(&sys_tmralt, ID_TMR_1, 0xFFFFFFFF - RESET_VALUE);
 	microblaze_register_handler(XIntc_DeviceInterruptHandler, ID_INTC);
@@ -107,7 +107,10 @@ int setup_lcd(void) {
 	return XST_SUCCESS;
 }
 
-// ---------- private: interrupt handlers ----------
+// ---------- private: interrupt handlers and hardware access function ----------
+// xxx_handler only process hardware-based logic.
+// They takes raw inputs from hardware and pass hardware state to intr_xxx
+// Logic and interaction are implemented in intr_xxxx, in bsp.c
 
 void timer_handler() {
 	Xuint32 ctrl = XTimerCtr_ReadReg(sys_tmrctr.BaseAddress, 0, XTC_TCSR_OFFSET);
@@ -160,6 +163,18 @@ void button_handler() {
 	if (time - btn_prev > DEBOUNCE_TIME)
 		intr_button(btn_flag);
 	btn_prev = time;
+}
+
+u32 getGlobalTime(void) {
+	return time_global;
+}
+
+u32 getMicValue(void){
+	return XGpio_DiscreteRead(&sys_mic, GPIO_MASK);
+}
+
+void show_led(u32 val){
+	XGpio_DiscreteWrite(&sys_led, GPIO_MASK, val);
 }
 
 // ---------- private: internal functions ---------
@@ -255,13 +270,4 @@ u32 encoder_FSM_switch(u32 enc_flag) {
 // end double bouncing correction code ---------------------------------------
 	}
 	return FSM_ERR_UNKNOWN;
-}
-
-u32 getGlobalTime(void) {
-	return time_global;
-}
-
-
-u32 getMicValue(void){
-	return XGpio_DiscreteRead(&sys_mic, GPIO_MASK);
 }

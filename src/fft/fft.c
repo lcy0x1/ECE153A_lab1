@@ -1,6 +1,7 @@
 #include "trig.h"
 #include "header.h"
 #include "xintc.h"
+#include "../lab3b/hardware.h"
 
 #if USE_FLOAT
 #define CAST_SIN(v) v
@@ -132,29 +133,40 @@ static volatile int slow_count = 0;
 
 void log_slow_mic_value(unsigned int value){
 	slow[slow_index] = value;
+	// circular array
 	slow_index = (slow_index + 1) & (SLOW_SAMPLES - 1);
 	if(slow_count < SLOW_SAMPLES)
 		slow_count ++;
 }
 
-float slow_fft(int m){
+// FFT using samples from timer
+float slow_fft(int m, int sk){
 	int n = 1 << m;
 	if(slow_count < n)
 		return 0;
+	int skip = 1 << sk;
+	// start sampler in case frequency changed later
+	stream_grabber_start();
+	// disable interrupt to prevent harzard
 	microblaze_disable_interrupts();
+	int sum = 0;
 	for(int i=0;i<n;i++){
-		q[i] = slow[(slow_index + i) & (SLOW_SAMPLES - 1)];
+		sum = 0;
+		for(int j=0;j<skip;j++)
+			sum += slow[(slow_index + (i << sk) + j) & (SLOW_SAMPLES - 1)] >> sk;
+		q[i] = sum;
 		w[i] = 0;
 	}
 	microblaze_enable_interrupts();
-	return fft(m, stream_freq / 32);
+	return fft(m, stream_freq / (1 << (sk + SLOW_RATE)));
 
 }
 
+// FFT using samples from stream grabber
 float one_fft(int m, int sk, int restart){
 	int n = 1 << m;
 	int skip = 1 << sk;
-	int round = 1 << (sk-1);
+	int round = sk == 0 ? 0 :(1 << (sk-1));
 	stream_grabber_wait_enough_samples( 1 << (m+sk));
 	int sum = 0;
 	for(int i=0;i<n;i++){
@@ -164,25 +176,40 @@ float one_fft(int m, int sk, int restart){
 		q[i] = sum;
 		w[i] = 0;
 	}
+	// restart only if it is not the testing FFT
 	if(restart)
 		stream_grabber_start();
 	return fft(m, stream_freq / skip);
 }
 
 float auto_range(int octave){
+
+#if !AUTO_RANGE_OVERRIDE
+	// octave - configuration map
 	if(octave <= 4)
-		return slow_fft(9);
-	if(octave <= 6)
+		return slow_fft(9, 1);
+	if(octave == 5)
+		return slow_fft(9, 0);
+	if(octave == 6)
 		return one_fft(8, 3, 1);
 	if(octave <= 8)
 		return one_fft(9, 1, 1);
 	if(octave == 9)
 		return one_fft(9, 0, 1);
+#endif
 
+	// 128-point test FFT to get a sense of the frequency range
 	float freq = one_fft(7, 0, 0);
 	if(freq > CUTOFF * 4)
 		return one_fft(9, 0, 1);
 	if(freq > CUTOFF)
 		return one_fft(9, 1, 1);
-	return one_fft(8, 3, 1);
+
+	// 128-point test FFT to get a sense of the frequency range
+	freq = one_fft(7, 2, 0);
+	if(freq > SLOW_CUTOFF * 2)
+		return one_fft(8, 3, 1);
+	if(freq > SLOW_CUTOFF)
+		return slow_fft(9, 0);
+	return slow_fft(9, 1);
 }

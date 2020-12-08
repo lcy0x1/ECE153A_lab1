@@ -70,6 +70,7 @@ void intr_timer(u32 time) {
 	log_slow_mic_value(getMicValue());
 }
 
+// parse button flag into HSM signal
 void intr_button(u32 flag) {
 	if(flag & BTN_UP)
 		dispatch(I_UP);
@@ -83,6 +84,7 @@ void intr_button(u32 flag) {
 		dispatch(P_TUNER);
 }
 
+// parse encoder flag intp HSM signal
 void intr_encoder(u32 flag) {
 	if (flag & ENC_CW)
 		dispatch(I_UP);

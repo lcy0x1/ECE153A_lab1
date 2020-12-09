@@ -17,11 +17,10 @@
 // The sampling rate of the timer
 #define SLOW_RATE 4
 // Number arrays holding the timer samples
-#define SLOW_SAMPLES 3
+#define SLOW_SAMPLES 4
 
 // These 2 values are used by auto-ranging to find the correct configuration
-#define CUTOFF 2800
-#define SLOW_CUTOFF 350
+#define CUTOFF 175
 // These 2 values are used by integer FFT to avoid overflow while maintaining sensitivity
 #define SIN_AMP 15
 #define SQ_AMP 16

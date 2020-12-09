@@ -25,6 +25,8 @@ typedef struct SLOW_TAG {
 
 static SLOW buffer[SLOW_SAMPLES];
 
+static unsigned int slow_index = 0;
+
 static fft_t cos[SAMPLES];
 static fft_t sin[SAMPLES];
 
@@ -136,6 +138,7 @@ float fft(int m, float sample_f) {
 
 // store, average, and distribute the timer samples into all arrays
 void log_slow_mic_value(unsigned int value){
+	slow_index++;
 	for(int i=0;i<SLOW_SAMPLES;i++){
 		SLOW * s = &buffer[i];
 		s->arr[s->index] = value;
@@ -144,6 +147,8 @@ void log_slow_mic_value(unsigned int value){
 		s->index = (s->index + 1) & (SAMPLES - 1);
 		if(s->count < SAMPLES)
 			s->count ++;
+		if(slow_index & ((2<<i)-1))
+			return;
 	}
 }
 
@@ -192,15 +197,17 @@ float auto_range(int octave){
 
 #if !AUTO_RANGE_OVERRIDE
 	// octave - configuration map
-	if(octave <= 3)
+	if(octave <= 2)
+		return slow_fft(9, 3);
+	if(octave == 3)
 		return slow_fft(9, 2);
 	if(octave == 4)
 		return slow_fft(9, 1);
 	if(octave == 5)
 		return slow_fft(9, 0);
-	if(octave == 6)
-		return one_fft(8, 3, 1);
-	if(octave <= 8)
+	if(octave < 7)
+		return one_fft(9, 2, 1);
+	if(octave == 8)
 		return one_fft(9, 1, 1);
 	if(octave == 9)
 		return one_fft(9, 0, 1);
@@ -208,18 +215,20 @@ float auto_range(int octave){
 
 	// 128-point test FFT to get a sense of the frequency range
 	float freq = one_fft(7, 0, 0);
-	if(freq > CUTOFF * 4)
+	if(freq > CUTOFF << 6)
 		return one_fft(9, 0, 1);
-	if(freq > CUTOFF)
+	if(freq > CUTOFF << 5)
 		return one_fft(9, 1, 1);
+	if(freq > CUTOFF << 3)
+		return one_fft(9, 2, 1);
 
 	// 128-point test FFT to get a sense of the frequency range
-	freq = one_fft(7, 2, 0);
-	if(freq > SLOW_CUTOFF * 4)
-		return one_fft(8, 3, 1);
-	if(freq > SLOW_CUTOFF * 2)
+	freq = one_fft(7, 3, 0);
+	if(freq > CUTOFF << 2)
 		return slow_fft(9, 0);
-	if(freq > SLOW_CUTOFF)
+	if(freq > CUTOFF << 1)
 		return slow_fft(9, 1);
-	return slow_fft(9, 2);
+	if(freq > CUTOFF)
+		return slow_fft(9, 2);
+	return slow_fft(9, 3);
 }

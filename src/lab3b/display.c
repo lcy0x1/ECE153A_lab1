@@ -131,6 +131,7 @@ void update_tuner(void){
 	u32 note = lab3b.note + 50;
 	int cent = note % 100 - 50;
 	u32 octave = note / 1200;
+	octave = octave < 0 ? 0 : octave > 9 ? 9 : octave;
 	char* str = note_char(note / 100 % 12);
 	setFont(BigFont);
 	PRINT_S(str, -3, 130);

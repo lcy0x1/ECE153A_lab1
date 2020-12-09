@@ -17,9 +17,23 @@ typedef float fft_t;
 typedef int fft_t;
 #endif
 
+typedef struct SLOW_TAG {
+	unsigned int arr[SAMPLES];
+	volatile int index;
+	volatile int count;
+} SLOW;
+
+static SLOW buffer[SLOW_SAMPLES];
 
 static fft_t cos[SAMPLES];
 static fft_t sin[SAMPLES];
+
+static fft_t new_[SAMPLES];
+static fft_t new_im[SAMPLES];
+static fft_t q[SAMPLES];
+static fft_t w[SAMPLES];
+
+float stream_freq = 100000000 / 2048.0;
 
 void precompute(){
 	int n = SAMPLES;
@@ -28,11 +42,6 @@ void precompute(){
 		sin[i] = CAST_SIN(sine(-PI*i/n));
 	}
 }
-
-static fft_t new_[SAMPLES];
-static fft_t new_im[SAMPLES];
-static fft_t q[SAMPLES];
-static fft_t w[SAMPLES];
 
 float fft(int m, float sample_f) {
 	int n = 1 << m;
@@ -125,39 +134,35 @@ float fft(int m, float sample_f) {
 	return place*s-(1-x0)*s;
 }
 
-float stream_freq = 100000000 / 2048.0;
-
-static unsigned int slow[SLOW_SAMPLES];
-static volatile int slow_index = 0;
-static volatile int slow_count = 0;
-
+// store, average, and distribute the timer samples into all arrays
 void log_slow_mic_value(unsigned int value){
-	slow[slow_index] = value;
-	// circular array
-	slow_index = (slow_index + 1) & (SLOW_SAMPLES - 1);
-	if(slow_count < SLOW_SAMPLES)
-		slow_count ++;
+	for(int i=0;i<SLOW_SAMPLES;i++){
+		SLOW * s = &buffer[i];
+		s->arr[s->index] = value;
+		// average for the next array
+		value = (value >> 1) + (s->arr[(s->index + SAMPLES - 1) & (SAMPLES - 1)] >> 1);
+		s->index = (s->index + 1) & (SAMPLES - 1);
+		if(s->count < SAMPLES)
+			s->count ++;
+	}
 }
 
 // FFT using samples from timer
 float slow_fft(int m, int sk){
 	int n = 1 << m;
-	if(slow_count < n)
-		return 0;
-	int skip = 1 << sk;
 	// start sampler in case frequency changed later
 	stream_grabber_start();
+	SLOW* s = &buffer[sk];
+	if(s->count < SAMPLES)
+		return 0;
 	// disable interrupt to prevent harzard
 	microblaze_disable_interrupts();
-	int sum = 0;
 	for(int i=0;i<n;i++){
-		sum = 0;
-		for(int j=0;j<skip;j++)
-			sum += slow[(slow_index + (i << sk) + j) & (SLOW_SAMPLES - 1)] >> sk;
-		q[i] = sum;
+		q[i] = s->arr[(s->index+i)&(SAMPLES-1)];
 		w[i] = 0;
 	}
 	microblaze_enable_interrupts();
+	set_width(sk == SLOW_SAMPLES - 1 ? WINDOW_SIZE : SLOW_WINDOW_SIZE);
 	return fft(m, stream_freq / (1 << (sk + SLOW_RATE)));
 
 }
@@ -179,6 +184,7 @@ float one_fft(int m, int sk, int restart){
 	// restart only if it is not the testing FFT
 	if(restart)
 		stream_grabber_start();
+	set_width(FAST_WINDOW_SIZE);
 	return fft(m, stream_freq / skip);
 }
 
@@ -186,7 +192,9 @@ float auto_range(int octave){
 
 #if !AUTO_RANGE_OVERRIDE
 	// octave - configuration map
-	if(octave <= 4)
+	if(octave <= 3)
+		return slow_fft(9, 2);
+	if(octave == 4)
 		return slow_fft(9, 1);
 	if(octave == 5)
 		return slow_fft(9, 0);
@@ -207,9 +215,11 @@ float auto_range(int octave){
 
 	// 128-point test FFT to get a sense of the frequency range
 	freq = one_fft(7, 2, 0);
-	if(freq > SLOW_CUTOFF * 2)
+	if(freq > SLOW_CUTOFF * 4)
 		return one_fft(8, 3, 1);
-	if(freq > SLOW_CUTOFF)
+	if(freq > SLOW_CUTOFF * 2)
 		return slow_fft(9, 0);
-	return slow_fft(9, 1);
+	if(freq > SLOW_CUTOFF)
+		return slow_fft(9, 1);
+	return slow_fft(9, 2);
 }

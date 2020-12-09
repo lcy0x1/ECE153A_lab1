@@ -6,20 +6,22 @@
 #define USE_FLOAT 1
 // if AUTO_RANGE_OVERRIDE is set, FFT will automatically choose the correct configuration
 // and override the provided octave. This comes with a small 10ms overhead in Debug mode
-#define AUTO_RANGE_OVERRIDE 1
+#define AUTO_RANGE_OVERRIDE 0
 
-// Window size for window averaging. smooth the data to be more displayable.
-#define WINDOW_SIZE 8
+// Max window size for window averaging. smooth the data to be more displayable.
+#define WINDOW_SIZE 32
+#define FAST_WINDOW_SIZE 8
+#define SLOW_WINDOW_SIZE 16
 // Max FFT size
 #define SAMPLES 512
 // The sampling rate of the timer
 #define SLOW_RATE 4
-// The array holding the timer samples
-#define SLOW_SAMPLES 1024
+// Number arrays holding the timer samples
+#define SLOW_SAMPLES 3
 
 // These 2 values are used by auto-ranging to find the correct configuration
-#define CUTOFF 2500
-#define SLOW_CUTOFF 600
+#define CUTOFF 2800
+#define SLOW_CUTOFF 350
 // These 2 values are used by integer FFT to avoid overflow while maintaining sensitivity
 #define SIN_AMP 15
 #define SQ_AMP 16
@@ -35,6 +37,8 @@ void precompute();
 // Choose appropriate configuration based on octave.
 // if AUTO_RANGE_OVERRIDE is set, auto range will override octave selection
 float auto_range(int octave);
+// called by FFT, set the window width
+void set_width(int width);
 // add the frequency into the averaging window
 void add_window(float freq);
 // get the mean of the current window

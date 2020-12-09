@@ -6,16 +6,23 @@ static char notes[12][3]={"C ","C#","D ","D#","E ","F ","F#","G ","G#","A ","A#"
 static float window[WINDOW_SIZE];
 static int win_size = 0, win_end = -1;
 static float win_sum = 0, win_sqsum = 0;
+static int win_level = 8;
+
+void set_width(int width){
+	if(win_level == width)
+		return;
+	win_size = 0;
+	win_end = -1;
+	win_sum = 0;
+	win_sqsum = 0;
+	win_level = width;
+}
 
 void add_window(float freq){
-	if(win_size == 0){
-		for(int i=0;i<WINDOW_SIZE;i++)
-			window[i] = 0;
-	}
-	win_end = (win_end + 1) & (WINDOW_SIZE - 1);
-	if(win_size == WINDOW_SIZE){
+	win_end = (win_end + 1) & (win_level - 1);
+	if(win_size == win_level){
 		win_sum -= window[win_end];
-		win_sqsum -= window[win_end]*window[win_end];
+		win_sqsum -= window[win_end] * window[win_end];
 	}
 	else win_size ++;
 	window[win_end] = freq;

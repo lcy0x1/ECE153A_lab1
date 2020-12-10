@@ -36,8 +36,10 @@ void QF_onIdle(void) { /* entered with interrupts locked */
 	if(fft_enable) {
 		add_window(auto_range(lab3b.octave));
 		int note = find_note(lab3b.a4, get_mean());
-		if(lab3b.note != note){
+		int freq = get_mean();
+		if(lab3b.note != note||lab3b.freq != freq){
 			lab3b.note = note;
+			lab3b.freq = freq;
 			post_command(UPDATE, TUNER);
 		}
 	}

@@ -19,6 +19,7 @@ typedef struct LAB3B_TAG {
 	u32 octave;
 	u32 a4;
 	u32 note;
+	u32 freq;
 } LAB3B;
 
 extern struct LAB3B_TAG lab3b;

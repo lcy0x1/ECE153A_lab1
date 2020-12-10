@@ -67,9 +67,15 @@ void execute_command(void){
 
 #define RECTBG(R,G,B,X,Y,W,H) setColor(R,G,B); RECT(X, Y, W, H) setColor(COL_TXT); setColorBg(R,G,B);
 
-#define RECT_OCT(COL) RECTBG(COL, 80, 110, 80, 80)
-#define RECT_TUNER(COL) RECTBG(COL, 80, 110, 80, 80)
-#define RECT_A4(COL) RECTBG(COL, 70, 110, 100, 60)
+#define RECT_INTERF(COL) RECTBG(COL, 80, 110, 80, 80)
+#define RMV_TUNER(COL) RECTBG(COL, 90, 130, 55, 60)
+#define RMV_OCT(COL) RECTBG(COL, 90, 120, 60, 60)
+#define RMV_A4(COL) RECTBG(COL, 80, 120, 80, 40)
+#define RMV_FREQ(COL) RECTBG(COL, 100, 170, 40, 10)
+#define RECT_A4L(COL) RECTBG(COL, 70, 110, 10, 60)
+#define RECT_A4R(COL) RECTBG(COL, 160, 110, 10, 60)
+#define RECT_A4B(COL) RECTBG(COL, 80, 170, 80, 20)
+#define RMV_HZ(COL) RECTBG(COL, 130, 170, 30, 10)
 
 #define PRINT_C(C,R,Y) printChar(C,120+cfont.x_size*R/2,Y);
 #define PRINT_S(S,R,Y) lcdPrint(S,120+cfont.x_size*R/2,Y);
@@ -84,6 +90,7 @@ void init_background(void) {
 	lcdPrint("Project Tuner", 10, 10);
 	setFont(SmallFont);
 	lcdPrint(" Arthur Wang & Tianrui Hu", 10, 40);
+	RECT_INTERF(COL_TUNER)
 }
 
 //--------------------------------------
@@ -91,7 +98,7 @@ void init_background(void) {
 //--------------------------------------
 
 void draw_octave(void){
-	RECT_OCT(COL_TUNER)
+//	RECT_OCT(COL_TUNER)
 
 	PRINT_S("Current", -7, 120);
 	PRINT_S("octave", -6, 130);
@@ -113,7 +120,7 @@ void update_octave(void){
 }
 
 void erase_octave(void){
-	RECT_OCT(COL_BG)
+	RMV_OCT(COL_TUNER)
 }
 
 
@@ -122,12 +129,12 @@ void erase_octave(void){
 //--------------------------------------
 
 void draw_tuner(void){
-	RECT_TUNER(COL_TUNER)
 
 	update_tuner();
 }
 
 void update_tuner(void){
+	RMV_FREQ(COL_TUNER)
 	u32 note = lab3b.note + 50;
 	int cent = note % 100 - 50;
 	u32 octave = note / 1200;
@@ -142,10 +149,17 @@ void update_tuner(void){
 	u8 cten = cent / 10;
 	PRINT_C(cten == 0 ? ' ' : cten + 0x30, -1, 150);
 	PRINT_C(cent % 10 + 0x30, 1, 150);
+	int freq = lab3b.freq;
+	char* fe;
+	sprintf(fe,"%d",freq);
+	PRINT_S(fe, -6, 170);
+	PRINT_S("Hz", 4, 170);
+
 }
 
 void erase_tuner(void){
-	RECT_TUNER(COL_BG)
+	RMV_TUNER(COL_TUNER)
+	RMV_HZ(COL_TUNER)
 }
 
 
@@ -154,7 +168,9 @@ void erase_tuner(void){
 //--------------------------------------
 
 void draw_a4(void){
-	RECT_A4(COL_TUNER)
+	RECT_A4L(COL_TUNER)
+	RECT_A4B(COL_BG)
+	RECT_A4R(COL_TUNER)
 
 	PRINT_S("Current A4", -10, 120);
 	setFont(BigFont);
@@ -171,6 +187,9 @@ void update_a4(void){
 }
 
 void erase_a4(void){
-	RECT_A4(COL_BG)
+	RMV_A4(COL_TUNER)
+	RECT_A4L(COL_BG)
+	RECT_A4R(COL_BG)
+	RECT_A4B(COL_TUNER)
 	setFont(SmallFont);
 }

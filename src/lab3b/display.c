@@ -1,6 +1,7 @@
 #include "display.h"
 #include "lab3b.h"
 #include "../fft/header.h"
+#include <stdio.h>
 
 static u32 pending_cmd = 0;
 
@@ -133,8 +134,9 @@ void draw_tuner(void){
 	update_tuner();
 }
 
+char fe[6];
+
 void update_tuner(void){
-	RMV_FREQ(COL_TUNER)
 	u32 note = lab3b.note + 50;
 	int cent = note % 100 - 50;
 	u32 octave = note / 1200;
@@ -150,8 +152,7 @@ void update_tuner(void){
 	PRINT_C(cten == 0 ? ' ' : cten + 0x30, -1, 150);
 	PRINT_C(cent % 10 + 0x30, 1, 150);
 	int freq = lab3b.freq;
-	char* fe;
-	sprintf(fe,"%d",freq);
+	sprintf(fe,"%5d",freq);
 	PRINT_S(fe, -6, 170);
 	PRINT_S("Hz", 4, 170);
 

@@ -205,7 +205,7 @@ float auto_range(int octave){
 		return slow_fft(9, 1);
 	if(octave == 5)
 		return slow_fft(9, 0);
-	if(octave < 7)
+	if(octave <= 7)
 		return one_fft(9, 2, 1);
 	if(octave == 8)
 		return one_fft(9, 1, 1);
